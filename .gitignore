@@ -1,0 +1,35 @@
+# Credentials
+.iredcreds.json
+.test.creds.json
+app/tests/.test_iredcreds.json
+app/tests/.iredcreds.test.json
+
+# Database
+*.db
+data/**
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+*.egg-info/
+
+# Go
+iredparser/bin/
+iredparser/iredparser
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project-specific
+sync.sh
+todo.md
+
+# Build artifacts
+build.sh

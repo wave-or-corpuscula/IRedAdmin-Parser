@@ -1,0 +1,15 @@
+{
+  "include": [
+    "app",
+    "run.py"
+  ],
+  "exclude": [
+    "**/data",
+    "**/iredparser",
+    "**/node_modules",
+    "**/__pycache__",
+    "**/.*",
+    ".venv"
+  ],
+  "watchFilesSourceHandledExternally": true
+}
