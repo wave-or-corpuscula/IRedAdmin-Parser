@@ -6,6 +6,8 @@ app/tests/.iredcreds.test.json
 
 # Database
 *.db
+data/**
+!data/.gitkeep
 
 # Python
 __pycache__/
