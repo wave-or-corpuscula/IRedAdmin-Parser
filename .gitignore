@@ -6,7 +6,6 @@ app/tests/.iredcreds.test.json
 
 # Database
 *.db
-data/**
 
 # Python
 __pycache__/
@@ -17,7 +16,6 @@ __pycache__/
 
 # Go
 iredparser/bin/
-iredparser/iredparser
 
 # IDE
 .vscode/
