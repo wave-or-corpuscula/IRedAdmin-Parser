@@ -1,9 +1,8 @@
 import sqlite3
 from typing import Any, Dict, List
 
-from pytest import param
-
 from app.database.models import DisplayModel
+from app.database.db import ALLOWED_SORTS
 
 
 class MailboxRepository:
@@ -16,17 +15,7 @@ class MailboxRepository:
         sort_key: str = "address",
         sort_desc: bool = False,
     ) -> List[tuple]:
-        ALLOWED_SORTS = {
-            "id": "m.id",
-            "server": "s.name",
-            "domain": "d.name",
-            "address": "m.address",
-            "display_name": "m.display_name",
-            "disabled": "m.disabled",
-            "is_admin": "m.is_admin",
-            "quota": "m.quota_bytes",
-            "used_memory": "m.used_memory_bytes",
-        }
+        
         query = """
         SELECT 
             m.id, 
@@ -78,7 +67,14 @@ class MailboxRepository:
 
         db_sort_column = ALLOWED_SORTS.get(sort_key, "m.address")
         direction = "DESC" if sort_desc else "ASC"
-        query += f" ORDER BY {db_sort_column} {direction}"
+
+        if sort_key == "quota":
+            if sort_desc:
+                query += " ORDER BY (CASE WHEN m.quota_bytes = -1 THEN 1 ELSE 0 END) DESC, m.quota_bytes DESC"
+            else:
+                query += " ORDER BY (CASE WHEN m.quota_bytes = -1 THEN 1 ELSE 0 END) ASC, m.quota_bytes ASC"
+        else:
+            query += f" ORDER BY {db_sort_column} {direction}"
 
         cur = self.conn.execute(query, params)
 
