@@ -28,13 +28,25 @@ COLUMNS = [
     "Домен",
     "Адрес",
     "Отображаемое имя",
-    "Бан",
+    "Активен",
     "Админ",
     "Квота",
     "Использовано",
     "Занято %",
 ]
 
+SORT_KEYS_BY_INDEX = [
+    "id",
+    "server",
+    "domain",
+    "address",
+    "display_name",
+    "disabled",
+    "is_admin",
+    "quota",
+    "used_memory",
+    "usage_percent",
+]
 
 class FilterError(Exception):
     def __init__(self, title: str = "", message: str = "") -> None:
@@ -159,10 +171,16 @@ class SearchScreen(Screen):
         row_data = event.data_table.get_row(event.row_key)
         self.notify(title="RowSelected", message=str(row_data))
 
-    @on(DataTable.RowHighlighted)
-    def handle_highlight_row(self, event: DataTable.RowSelected) -> None:
-        row_data = event.data_table.get_row(event.row_key)
-        self.notify(title="RowHighlighted", message=str(row_data))
+    @on(DataTable.HeaderSelected)
+    def handle_highlight_column(self, event: DataTable.HeaderSelected) -> None:
+        col_index = event.column_index
+        clicked_column = SORT_KEYS_BY_INDEX[col_index]
+        if self.sort_column == clicked_column:
+            self.sort_desc = not self.sort_desc
+        else:
+            self.sort_desc = False
+            self.sort_column = clicked_column
+        self.update_table_data()
 
     def update_table_data(self) -> None:
         table = self.query_one(DataTable)
@@ -170,14 +188,14 @@ class SearchScreen(Screen):
 
         with transaction() as conn:
             repo = MailboxRepository(conn)
-            models = repo.get_rows(
+            models = repo.get_models(
                 asdict(self.filters),
                 self.sort_column,
                 self.sort_desc,
             )
 
         for row in models:
-            table.add_row(*row)
+            table.add_row(*row.to_row())
 
     def watch_filters(self, old, new) -> None:
         self.update_table_data()
