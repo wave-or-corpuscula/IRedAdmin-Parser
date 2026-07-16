@@ -6,13 +6,14 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
+	"iredparser/common"
+	"iredparser/internal/parser"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
 	"strings"
 	"time"
 
-	"iredparser/internal/parser"
 	apperrors "iredparser/pkg/errors"
 
 	"github.com/PuerkitoBio/goquery"
@@ -29,8 +30,11 @@ type Client struct {
 	server     string
 }
 
-func NewClient(serverName string) *Client {
-	jar, _ := cookiejar.New(nil)
+func createHTTPClient(timeout int) (*http.Client, error) {
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		return nil, err
+	}
 
 	customTransport := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -39,16 +43,26 @@ func NewClient(serverName string) *Client {
 	client := &http.Client{
 		Jar:       jar,
 		Transport: customTransport,
-		Timeout:   time.Duration(parser.HTTPTimeoutSeconds) * time.Second,
-		// CheckRedirect: func(req *http.Request, via []*http.Request) error {
-		// 	return http.ErrUseLastResponse
-		// },
+		Timeout:   time.Duration(timeout) * time.Second,
 	}
-
-	return &Client{client, serverName}
+	return client, nil
 }
 
-func (c *Client) ConfigureClient(config AuthConfig) {
+// TODO: Rewrite all code for new contructor
+func NewClient(serverName string, timeout int) (*Client, error) {
+	client, err := createHTTPClient(timeout)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Client{client, serverName}, nil
+}
+
+func NewAuthClient(timeout int, config common.ServerConfig) (*Client, error) {
+	// TODO:: Create and authenticate client
+}
+
+func (c *Client) ConfigureClient(config common.ServerConfig) {
 }
 
 func (c *Client) GetServer() string {
@@ -58,14 +72,6 @@ func (c *Client) GetServer() string {
 func (c *Client) GetBaseURL() string {
 	return parser.CreateBaseURL(c.server)
 }
-
-// func AuthClient(ctx context.Context, c *http.Client, config AuthConfig) (*Client, error) {
-// 	err := c.Auth(ctx, config)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("client: %w", err)
-// 	}
-// 	return httpClient, nil
-// }
 
 func (c *Client) AuthServer(ctx context.Context, server string, login string, password string) error {
 	baseURL := parser.CreateBaseURL(server)
@@ -89,7 +95,6 @@ func (c *Client) AuthServer(ctx context.Context, server string, login string, pa
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		// return apperrors.ErrPostRequestFailed
 		return fmt.Errorf("post request failed: %w", err)
 	}
 	defer resp.Body.Close()
