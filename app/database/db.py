@@ -5,6 +5,18 @@ from contextlib import contextmanager
 
 DB_PATH = "./data/ireddata.db"
 
+ALLOWED_SORTS = {
+    "id": "m.id",
+    "server": "s.name",
+    "domain": "d.name",
+    "address": "m.address",
+    "display_name": "m.display_name",
+    "disabled": "m.disabled",
+    "is_admin": "m.is_admin",
+    "quota": "m.quota_bytes",
+    "used_memory": "m.used_memory_bytes",
+    "usage_percent": "usage_percent",
+}
 
 def create_connection(db_path: str = DB_PATH):
     conn = sqlite3.connect(db_path)
