@@ -15,11 +15,11 @@ const (
 
 var HTTPTimeoutSeconds = 20
 
-type ServerConfig struct {
-	ServerName string `json:"server_name"`
-	Login      string `json:"login"`
-	Password   string `json:"password"`
-}
+// type ServerConfig struct {
+// 	ServerName string `json:"server_name"`
+// 	Login      string `json:"login"`
+// 	Password   string `json:"password"`
+// }
 
 func CreateBaseURL(serverName string) string {
 	return fmt.Sprintf("https://%s/iredadmin", serverName)
