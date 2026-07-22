@@ -109,6 +109,8 @@ class SearchScreen(Screen):
         with transaction() as conn:
             repo = ServerRepository(conn)
             self.servers = [("Все", None)] + repo.get_tuples()
+        
+        self.selected_rows_lb = Label(id="selected-rows-count")
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -117,7 +119,7 @@ class SearchScreen(Screen):
             with Horizontal(classes="top-bar"):
                 yield Input(placeholder="Поиск (Адрес / Имя):", id="search-input")
 
-            # Выпадающая панель: Фильтры
+            # Collapsing panel (filters)
             with Collapsible(title="Фильтры"):
                 if len(self.servers) > 2:
                     yield Label("Сервер:", classes="filter-label")
@@ -155,11 +157,16 @@ class SearchScreen(Screen):
                         classes="input-range",
                     )
 
-                # Правая панель: Таблица данных
+            # Data table
             yield DataTable(zebra_stripes=True, cursor_type="row")
+
+            # Footer
             with Horizontal(classes="footer-block"):
-                yield Button(label="Назад", id="search-nav-back")
-                yield Button(label="Синхронизовать", id="sync-mailboxes")
+                with Horizontal(classes="left"):
+                    yield self.selected_rows_lb
+                with Horizontal(classes="right"):
+                    yield Button(label="Синхронизовать", id="sync-mailboxes")
+                    yield Button(label="Назад", id="search-nav-back")
 
     def on_mount(self) -> None:
         table: DataTable = self.query_one(DataTable)
@@ -182,6 +189,9 @@ class SearchScreen(Screen):
             self.sort_column = clicked_column
         self.update_table_data()
 
+    def update_rows_count_lb(self, count: int) -> None:
+        self.selected_rows_lb.update(f"Выбрано строк: {count}")
+
     def update_table_data(self) -> None:
         table = self.query_one(DataTable)
         table.clear()
@@ -196,6 +206,7 @@ class SearchScreen(Screen):
 
         for row in models:
             table.add_row(*row.to_row())
+        self.update_rows_count_lb(len(models))
 
     def watch_filters(self, old, new) -> None:
         self.update_table_data()

@@ -170,6 +170,7 @@ Collapsible > CollapsibleTitle {
 Collapsible > CollapsibleTitle:focus {
     background: $accent;
     color: $text;
+    align: center middle;
 }
 
 Contents {
@@ -220,12 +221,6 @@ DataTable > .datatable--header {
     text-style: bold;
 }
 
-.footer-block {
-    margin: 0 1 1 1;
-    height: 3;
-    align: left middle;
-}
-
 #search-nav-back {
     background: $error-darken-1;
     color: $text;
@@ -237,6 +232,29 @@ DataTable > .datatable--header {
     background: $error;
 }
 
+
+.footer-block {
+  margin: 0 1 1 1;
+  padding: 0 1;
+  height: 3;
+  align: left middle;
+}
+
+.footer-block .left {
+  align: left middle;
+}
+
+.footer-block .right {
+  align: right middle;
+}
+
+#selected-rows-count {
+  width: auto;
+  color: $text;
+  text-style: bold;
+  background: $panel;
+  border: solid $primary;
+}
 
 # ### Sync screen ###
 
