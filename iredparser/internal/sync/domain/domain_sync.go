@@ -4,14 +4,14 @@ package syncdomain
 import (
 	"context"
 	"fmt"
-
 	"iredparser/internal/database"
 	"iredparser/internal/parser"
+
 	domainparser "iredparser/internal/parser/domain"
 )
 
 type DomainStorage interface {
-	UpsertDomainMany(domains []*parser.Domain, ServerID int64) ([]*database.DomainModel, error)
+	UpsertDomainMany(domains []*parser.Domain, serverID int64) ([]*database.DomainModel, error)
 }
 
 type DomainSyncService struct {
@@ -26,13 +26,13 @@ func NewDomainSyncService(parser *domainparser.DomainParser, storage DomainStora
 	}
 }
 
-func (s *DomainSyncService) Sync(ctx context.Context, serverID int64) ([]*database.DomainModel, error) {
-	domains, err := s.domainParser.Parse(ctx)
+func (s *DomainSyncService) Sync(ctx context.Context, server *database.ServerModel) ([]*database.DomainModel, error) {
+	domains, err := s.domainParser.Parse(ctx, server.Name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse domains: %w", err)
 	}
 
-	models, err := s.storage.UpsertDomainMany(domains, serverID)
+	models, err := s.storage.UpsertDomainMany(domains, server.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to sync domains: %w", err)
 	}

@@ -3,9 +3,9 @@ package syncmailbox
 import (
 	"context"
 	"fmt"
-
 	"iredparser/internal/database"
 	"iredparser/internal/parser"
+
 	mailboxparser "iredparser/internal/parser/mailbox"
 )
 
@@ -25,8 +25,8 @@ func NewMailboxSyncService(parser *mailboxparser.MailboxParser, storage MailboxS
 	}
 }
 
-func (s *MailboxSyncService) Sync(ctx context.Context, domain *database.DomainModel) ([]*database.MailboxModel, error) {
-	mailboxes, err := s.mailboxParser.Parse(ctx, domain.Domain)
+func (s *MailboxSyncService) Sync(ctx context.Context, server *database.ServerModel, domain *database.DomainModel) ([]*database.MailboxModel, error) {
+	mailboxes, err := s.mailboxParser.Parse(ctx, server.Name, domain.Domain)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to parse mailboxes for domain %q: %w",

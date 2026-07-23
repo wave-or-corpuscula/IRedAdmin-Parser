@@ -4,17 +4,16 @@ package syncservice
 import (
 	"context"
 	"errors"
-	"sync"
-
 	"iredparser/internal/database"
+	"sync"
 )
 
 type MailSyncServiceType interface {
-	Sync(ctx context.Context, domain *database.DomainModel) ([]*database.MailboxModel, error)
+	Sync(ctx context.Context, server *database.ServerModel, domain *database.DomainModel) ([]*database.MailboxModel, error)
 }
 
 type DomainSyncServiceType interface {
-	Sync(ctx context.Context, serverID int64) ([]*database.DomainModel, error)
+	Sync(ctx context.Context, server *database.ServerModel) ([]*database.DomainModel, error)
 }
 
 type SyncService struct {
@@ -29,8 +28,8 @@ func NewSyncService(mailSync MailSyncServiceType, domainSync DomainSyncServiceTy
 	}
 }
 
-func (s *SyncService) Sync(ctx context.Context, serverID int64) (int, error) {
-	domains, err := s.domainSync.Sync(ctx, serverID)
+func (s *SyncService) Sync(ctx context.Context, server *database.ServerModel) (int, error) {
+	domains, err := s.domainSync.Sync(ctx, server)
 	if err != nil {
 		return -1, err
 	}
@@ -41,7 +40,7 @@ func (s *SyncService) Sync(ctx context.Context, serverID int64) (int, error) {
 
 	for _, domain := range domains {
 		wg.Go(func() {
-			mailboxes, err := s.mailSync.Sync(ctx, domain)
+			mailboxes, err := s.mailSync.Sync(ctx, server, domain)
 			if err != nil {
 				errCh <- err
 				return
