@@ -37,7 +37,6 @@ class IRedParserClient:
             text=True,
         )
 
-        print(process.stdout)
         response = CLIResponse.from_dict(
             json.loads(process.stdout),
         )
