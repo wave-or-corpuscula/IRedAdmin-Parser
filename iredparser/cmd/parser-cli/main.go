@@ -1,12 +1,13 @@
 package main
 
 import (
-	"log"
-	"os"
-
+	"errors"
 	"iredparser/internal/controller"
 	"iredparser/internal/database"
 	"iredparser/internal/parser/client"
+	"log"
+	"os"
+
 	domainparser "iredparser/internal/parser/domain"
 	mailboxparser "iredparser/internal/parser/mailbox"
 	authservice "iredparser/internal/services/auth_service"
@@ -16,7 +17,11 @@ import (
 )
 
 func main() {
-	httpClient := client.NewClient("")
+	httpClient, err := client.NewClient()
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	authService := authservice.NewAuthService()
 
 	db, err := database.Connect(controller.DSN)
@@ -37,7 +42,13 @@ func main() {
 
 	rootCmd := ctrl.InitCommands()
 
+	var clierr *controller.CLIError
+
 	if err := controller.Execute(rootCmd); err != nil {
-		ctrl.SendError(controller.ErrCli, err)
+		if errors.As(err, &clierr) {
+			ctrl.SendError(clierr.Code, clierr.Err)
+		} else {
+			ctrl.SendError(controller.ErrCli, err)
+		}
 	}
 }

@@ -5,23 +5,16 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
-	"time"
-
 	"iredparser/common"
 	"iredparser/internal/database"
 	"iredparser/internal/parser/client"
+	"time"
 
 	apperrors "iredparser/pkg/errors"
 
 	"github.com/spf13/cobra"
-)
-
-const (
-	ErrCliInvalidConfig       = "INVALID_CONFIG"
-	ErrCliInvalidCredentials  = "INVALID_CREDENTIALS"
-	ErrCliAuthenticationError = "AUTHENTICATION_ERROR"
-	ErrCli                    = "ERROR_IN_PROCESS"
 )
 
 const (
@@ -34,6 +27,30 @@ type Response struct {
 	Error   *ErrorResponse `json:"error"`
 	Data    any            `json:"data"`
 }
+
+type CLIError struct {
+	Code string
+	Err  error
+}
+
+func (e *CLIError) Error() string {
+	if e.Err != nil {
+		return fmt.Sprintf("[%s] %v", e.Code, e.Err)
+	}
+	return fmt.Sprintf("[%s] unknown error", e.Code)
+}
+
+func (e *CLIError) Unwrap() error {
+	return e.Err
+}
+
+// Error codes
+const (
+	ErrCliInvalidConfig       = "INVALID_CONFIG"
+	ErrCliInvalidCredentials  = "INVALID_CREDENTIALS"
+	ErrCliAuthenticationError = "AUTHENTICATION_ERROR"
+	ErrCli                    = "UNKNOWN_CLI_ERROR"
+)
 
 type ErrorResponse struct {
 	Code    string `json:"code"`
@@ -62,11 +79,11 @@ func (c *CLIController) SendError(code string, err error) {
 }
 
 type AuthChecker interface {
-	AuthClient(ctx context.Context, c *client.Client, config client.AuthConfig) error
+	AuthClient(ctx context.Context, c *client.Client, config common.ServerConfig) error
 }
 
 type SyncService interface {
-	Sync(ctx context.Context, serverID int64) (int, error)
+	Sync(ctx context.Context, server *database.ServerModel) (int, error)
 }
 
 type Storage interface {
@@ -98,48 +115,46 @@ func NewCLIController(client *client.Client, storage *database.Database, authcSe
 
 func (c *CLIController) InitCommands() *cobra.Command {
 	rootCmd := &cobra.Command{
-		Use:   "parser-cli",
-		Short: "Parser CLi Utility from human for human",
+		Use:           "parser-cli",
+		Short:         "Parser CLi Utility from human for human",
+		SilenceErrors: true,
+		SilenceUsage:  true,
 	}
 
 	rootCmd.PersistentFlags().StringP("config", "c", "{}", "json config for server")
 	_ = rootCmd.MarkPersistentFlagRequired("config")
 
-	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
+	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
 		var cfg common.ServerConfig
 
 		configString, err := cmd.Flags().GetString("config")
 		if err != nil {
-			return
+			return &CLIError{Code: ErrCli, Err: fmt.Errorf("cli controller: failed to parse config string: %w", err)}
 		}
 
 		err = json.Unmarshal([]byte(configString), &cfg)
 		if err != nil {
-			c.SendError(
-				ErrCliInvalidConfig,
-				err,
-			)
-			return
+			return &CLIError{Code: ErrCliInvalidConfig, Err: fmt.Errorf("cli controller: unable to unmarshal config: %w", err)}
 		}
 		ctx, cancel := context.WithTimeout(cmd.Context(), time.Duration(10)*time.Second)
 		defer cancel()
 
-		err = c.AuthService.AuthClient(ctx, c.Client, client.AuthConfig(cfg))
+		err = c.AuthService.AuthClient(ctx, c.Client, cfg)
 		if errors.Is(err, apperrors.ErrInvalidCredentials) {
-			c.SendError(
-				ErrCliInvalidCredentials,
-				err,
-			)
-			return
+			return &CLIError{
+				Code: ErrCliInvalidCredentials,
+				Err:  err,
+			}
 		} else if err != nil {
-			c.SendError(
-				ErrCliAuthenticationError,
-				err,
-			)
-			return
+			return &CLIError{
+				Code: ErrCliAuthenticationError,
+				Err:  err,
+			}
 		}
 
 		c.config = cfg
+
+		return nil
 	}
 
 	rootCmd.AddCommand(c.NewAuthCheckCmd())

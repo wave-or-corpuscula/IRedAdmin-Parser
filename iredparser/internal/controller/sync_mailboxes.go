@@ -9,11 +9,11 @@ func (c *CLIController) NewSyncMailboxesCmd() *cobra.Command {
 		Use:   "sync",
 		Short: "syncronize mailboxes in provided sever",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			serverID, err := c.Storage.GetServerID(c.config.Server)
+			server, err := c.Storage.GetServer(c.config.Server)
 			if err != nil {
 				return err
 			}
-			amount, err := c.SyncService.Sync(cmd.Context(), serverID)
+			amount, err := c.SyncService.Sync(cmd.Context(), server)
 			if err != nil {
 				return err
 			}

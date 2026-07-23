@@ -3,11 +3,13 @@ package controller
 import (
 	"bytes"
 	"encoding/json"
+	"iredparser/common"
+	"iredparser/internal/database"
+	"iredparser/internal/parser"
+	"iredparser/internal/parser/client"
 	"log"
 	"testing"
 
-	"iredparser/internal/database"
-	"iredparser/internal/parser/client"
 	domainparser "iredparser/internal/parser/domain"
 	mailboxparser "iredparser/internal/parser/mailbox"
 	authservice "iredparser/internal/services/auth_service"
@@ -19,13 +21,22 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func getTestCLIController(buf *bytes.Buffer) *CLIController {
-	httpClient := client.NewClient("")
+func getTestCLIController(buf *bytes.Buffer, config common.ServerConfig) (*CLIController, error) {
+	httpClient, err := client.NewClient()
+	if err != nil {
+		return nil, err
+	}
 	authService := authservice.NewAuthService()
 
-	db, err := database.Connect(DSN)
+	db, err := database.Connect(":memory:")
+	log.Println(err)
 	if err != nil {
-		log.Fatalln(err)
+		return nil, err
+	}
+
+	_, err = db.UpsertServer(&parser.Server{Name: config.Server})
+	if err != nil {
+		return nil, err
 	}
 
 	mailParser := mailboxparser.NewMailboxParser(httpClient, Workers)
@@ -38,7 +49,7 @@ func getTestCLIController(buf *bytes.Buffer) *CLIController {
 
 	ctrl := NewCLIController(httpClient, db, authService, syncService, buf)
 
-	return ctrl
+	return ctrl, nil
 }
 
 func TestAuthCheckCLI(t *testing.T) {
@@ -48,13 +59,13 @@ func TestAuthCheckCLI(t *testing.T) {
 	for _, config := range configs {
 
 		buf := new(bytes.Buffer)
-		ctrl := getTestCLIController(buf)
+		ctrl, err := getTestCLIController(buf, config)
+		assert.NoError(t, err)
+
 		rootCmd := ctrl.InitCommands()
 		assert.NotNil(t, rootCmd)
 
-		cfg := client.AuthConfig(config)
-
-		jsonData, err := json.Marshal(cfg)
+		jsonData, err := json.Marshal(config)
 		assert.NoError(t, err)
 
 		rootCmd.SetArgs([]string{
@@ -77,16 +88,14 @@ func TestSyncCLI(t *testing.T) {
 	assert.NoError(t, err)
 
 	for _, config := range configs {
-		t.Log("start syncing for", config.Server)
-
 		buf := new(bytes.Buffer)
-		ctrl := getTestCLIController(buf)
+		ctrl, err := getTestCLIController(buf, config)
+		assert.NoError(t, err)
+
 		rootCmd := ctrl.InitCommands()
 		assert.NotNil(t, rootCmd)
 
-		cfg := client.AuthConfig(config)
-
-		jsonData, err := json.Marshal(cfg)
+		jsonData, err := json.Marshal(config)
 		assert.NoError(t, err)
 
 		rootCmd.SetArgs([]string{
