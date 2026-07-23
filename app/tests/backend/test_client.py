@@ -44,6 +44,7 @@ def test_auth_check_valid(get_auth_configs):
         assert resp.server == config.server
 
 
+# TODO:: скорее всего бд не успевает закрываться и поэтому иногда выдает database is locked (5) (SQLITE_BUSY). Разобраться
 def test_sync_mailboxes(get_auth_configs):
     client = IRedParserClient(BINARY_PATH)
     for config in get_auth_configs:
