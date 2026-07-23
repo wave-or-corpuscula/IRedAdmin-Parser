@@ -3,9 +3,8 @@ package database
 
 import (
 	"fmt"
-	"log"
-
 	"iredparser/internal/parser"
+	"log"
 
 	"github.com/jmoiron/sqlx"
 
@@ -36,7 +35,7 @@ type Database struct {
 func Connect(dsn string) (*Database, error) {
 	db, err := sqlx.Connect("sqlite", dsn)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to sqlite: %w", err)
+		return nil, fmt.Errorf("database: failed to connect to sqlite: %w", err)
 	}
 
 	storage := &Database{db: db}
@@ -104,14 +103,14 @@ func (d *Database) UpsertServer(server *parser.Server) (*ServerModel, error) {
 	model := ServerModel{Server: *server}
 	rows, err := d.db.NamedQuery(query, model)
 	if err != nil {
-		return nil, fmt.Errorf("failed to insert server: %w", err)
+		return nil, fmt.Errorf("database: failed to insert server: %w", err)
 	}
 	defer rows.Close()
 
 	if rows.Next() {
 		err = rows.StructScan(&model)
 		if err != nil {
-			return nil, fmt.Errorf("cannot read new server id: %w", err)
+			return nil, fmt.Errorf("database: cannot read new server id: %w", err)
 		}
 	}
 	return &model, nil
@@ -124,7 +123,7 @@ func (d *Database) GetServers() ([]ServerModel, error) {
 
 	err := d.db.Select(&serverModels, query)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch servers: %w", err)
+		return nil, fmt.Errorf("database: failed to fetch servers: %w", err)
 	}
 
 	return serverModels, nil
@@ -135,21 +134,21 @@ func (d *Database) DeleteServer(id int64) error {
 
 	_, err := d.db.Exec(query, id)
 	if err != nil {
-		return fmt.Errorf("failed delete server: %w", err)
+		return fmt.Errorf("database: failed delete server: %w", err)
 	}
 	return nil
 }
 
-func (d *Database) GetServerID(name string) (int64, error) {
-	query := `SELECT id FROM Servers WHERE name = ?;`
+func (d *Database) GetServer(name string) (*ServerModel, error) {
+	query := `SELECT * FROM Servers WHERE name = ?;`
 
-	var ID int64
-	err := d.db.Get(&ID, query, name)
+	var server ServerModel
+	err := d.db.Get(&server, query, name)
 	if err != nil {
-		return -1, fmt.Errorf("failed to get server id: %w", err)
+		return nil, fmt.Errorf("database: failed to select server model: %w", err)
 	}
 
-	return ID, nil
+	return &server, nil
 }
 
 func (d *Database) UpsertDomain(domain *parser.Domain, serverID int64) (*DomainModel, error) {
@@ -164,7 +163,7 @@ func (d *Database) UpsertDomain(domain *parser.Domain, serverID int64) (*DomainM
 func (d *Database) UpsertDomainMany(domains []*parser.Domain, serverID int64) ([]*DomainModel, error) {
 	tx, err := d.db.Beginx()
 	if err != nil {
-		return nil, fmt.Errorf("failed to begin transaction in domains: %w", err)
+		return nil, fmt.Errorf("database: failed to begin transaction in domains: %w", err)
 	}
 	defer tx.Rollback()
 
@@ -173,13 +172,13 @@ func (d *Database) UpsertDomainMany(domains []*parser.Domain, serverID int64) ([
 	for _, domain := range domains {
 		domainModel, err := d.upsertDomainTx(tx, domain, serverID)
 		if err != nil {
-			return nil, fmt.Errorf("failed to upsert domain %q: %w", domain.Name, err)
+			return nil, fmt.Errorf("database: failed to upsert domain %q: %w", domain.Name, err)
 		}
 		domainModels = append(domainModels, domainModel)
 	}
 
 	if err := tx.Commit(); err != nil {
-		return nil, fmt.Errorf("failed to commit domains transaction: %w", err)
+		return nil, fmt.Errorf("database: failed to commit domains transaction: %w", err)
 	}
 
 	return domainModels, err
@@ -201,14 +200,14 @@ func (d *Database) upsertDomainTx(tx *sqlx.Tx, domain *parser.Domain, serverID i
 	domainModel := &DomainModel{ServerID: serverID, Domain: *domain}
 	rows, err := tx.NamedQuery(query, domainModel)
 	if err != nil {
-		return nil, fmt.Errorf("failed to upsert domain: %w", err)
+		return nil, fmt.Errorf("database: failed to upsert domain: %w", err)
 	}
 	defer rows.Close()
 
 	if rows.Next() {
 		err = rows.StructScan(domainModel)
 		if err != nil {
-			return nil, fmt.Errorf("cannot scan domain id: %w", err)
+			return nil, fmt.Errorf("database: cannot scan domain id: %w", err)
 		}
 	}
 
@@ -221,7 +220,7 @@ func (d *Database) GetDomains() ([]*DomainModel, error) {
 
 	err := d.db.Select(&domains, query)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch domains: %w", err)
+		return nil, fmt.Errorf("database: failed to fetch domains: %w", err)
 	}
 
 	return domains, nil
@@ -232,7 +231,7 @@ func (d *Database) DeleteDomain(id int64) error {
 
 	_, err := d.db.Exec(query, id)
 	if err != nil {
-		return fmt.Errorf("failed to delete domain: %w", err)
+		return fmt.Errorf("database: failed to delete domain: %w", err)
 	}
 	return nil
 }
@@ -249,7 +248,7 @@ func (d *Database) UpsertMailbox(mailbox *parser.Mailbox, DomainID int64) (*Mail
 func (d *Database) UpsertMailboxMany(mailboxes []*parser.Mailbox, DomainID int64) ([]*MailboxModel, error) {
 	tx, err := d.db.Beginx()
 	if err != nil {
-		return nil, fmt.Errorf("failed to begin transaction in mailboxes: %w", err)
+		return nil, fmt.Errorf("database: failed to begin transaction in mailboxes: %w", err)
 	}
 	defer tx.Rollback()
 
@@ -258,14 +257,14 @@ func (d *Database) UpsertMailboxMany(mailboxes []*parser.Mailbox, DomainID int64
 	for _, mailbox := range mailboxes {
 		model, err := d.upsertMailboxTx(tx, mailbox, DomainID)
 		if err != nil {
-			return nil, fmt.Errorf("failed to upsert mailbox %q: %w", mailbox.Address, err)
+			return nil, fmt.Errorf("database: failed to upsert mailbox %q: %w", mailbox.Address, err)
 		}
 
 		mailboxModels = append(mailboxModels, model)
 	}
 
 	if err := tx.Commit(); err != nil {
-		return nil, fmt.Errorf("failed to commit mailboxes: %w", err)
+		return nil, fmt.Errorf("database: failed to commit mailboxes: %w", err)
 	}
 
 	return mailboxModels, nil
@@ -288,14 +287,14 @@ func (d *Database) upsertMailboxTx(tx *sqlx.Tx, mailbox *parser.Mailbox, DomainI
 	model := &MailboxModel{DomainID: DomainID, Mailbox: *mailbox}
 	rows, err := tx.NamedQuery(query, model)
 	if err != nil {
-		return nil, fmt.Errorf("failed to insert user: %w", err)
+		return nil, fmt.Errorf("database: failed to insert user: %w", err)
 	}
 	defer rows.Close()
 
 	if rows.Next() {
 		err = rows.StructScan(model)
 		if err != nil {
-			return nil, fmt.Errorf("cannot scan mailbox id: %w", err)
+			return nil, fmt.Errorf("database: cannot scan mailbox id: %w", err)
 		}
 	}
 
@@ -308,7 +307,7 @@ func (d *Database) GetMailboxes() ([]*MailboxModel, error) {
 	mailboxes := []*MailboxModel{}
 	err := d.db.Select(&mailboxes, query)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch mailboxes: %w", err)
+		return nil, fmt.Errorf("database: failed to fetch mailboxes: %w", err)
 	}
 
 	return mailboxes, nil
@@ -319,7 +318,7 @@ func (d *Database) DeleteMailbox(id int64) error {
 
 	_, err := d.db.Exec(query, id)
 	if err != nil {
-		return fmt.Errorf("failed to delete mailbox: %w", err)
+		return fmt.Errorf("database: failed to delete mailbox: %w", err)
 	}
 
 	return nil

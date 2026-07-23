@@ -2,14 +2,11 @@ package database
 
 import (
 	"fmt"
-
 	"iredparser/internal/parser"
 )
 
 func GetTestDB(dsn string) (*Database, error) {
-	// db, err := Connect("../../../data/ireddata.db")
-	db, err := Connect(dsn)
-	return db, err
+	return Connect(dsn)
 }
 
 func GetTestServer(num int) *parser.Server {

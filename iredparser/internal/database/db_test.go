@@ -2,9 +2,8 @@ package database
 
 import (
 	"fmt"
-	"testing"
-
 	"iredparser/internal/parser"
+	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -156,8 +155,8 @@ func TestGetServerID(t *testing.T) {
 	db, server, err := GetTestDBWithServer(1)
 	assert.NoError(t, err)
 
-	ID, err := db.GetServerID(server.Name)
+	srv, err := db.GetServer(server.Name)
 	assert.NoError(t, err)
 
-	assert.Equal(t, ID, server.ID)
+	assert.Equal(t, srv, server)
 }
