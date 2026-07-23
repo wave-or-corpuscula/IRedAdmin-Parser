@@ -3,6 +3,7 @@ package client
 import (
 	"bytes"
 	"context"
+	"iredparser/common"
 	"testing"
 
 	apptesting "iredparser/testing"
@@ -16,8 +17,12 @@ func GetTestAuthClient(ctx context.Context) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	config := AuthConfig(configs[0])
-	c := NewClient(config.Server)
+	config := common.ServerConfig(configs[0])
+	c, err := NewClient()
+	if err != nil {
+		return nil, err
+	}
+
 	return c, c.Auth(ctx, config)
 }
 

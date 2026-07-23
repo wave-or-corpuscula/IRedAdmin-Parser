@@ -19,59 +19,59 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-type AuthConfig struct {
-	Server   string `json:"server"`
-	Login    string `json:"login"`
-	Password string `json:"password"`
-}
+const RequestTimeout = 30
+
+// type AuthConfig struct {
+// 	Server   string `json:"server"`
+// 	Login    string `json:"login"`
+// 	Password string `json:"password"`
+// }
 
 type Client struct {
 	httpClient *http.Client
-	server     string
 }
 
-func createHTTPClient(timeout int) (*http.Client, error) {
+func createHTTPClient() (*http.Client, error) {
 	jar, err := cookiejar.New(nil)
 	if err != nil {
 		return nil, err
 	}
 
 	customTransport := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		TLSClientConfig:     &tls.Config{InsecureSkipVerify: true},
+		MaxIdleConns:        100,
+		MaxIdleConnsPerHost: 10,
+		IdleConnTimeout:     90 * time.Second,
 	}
 
 	client := &http.Client{
 		Jar:       jar,
 		Transport: customTransport,
-		Timeout:   time.Duration(timeout) * time.Second,
+		Timeout:   RequestTimeout * time.Second,
 	}
 	return client, nil
 }
 
 // TODO: Rewrite all code for new contructor
-func NewClient(serverName string, timeout int) (*Client, error) {
-	client, err := createHTTPClient(timeout)
+func NewClient() (*Client, error) {
+	client, err := createHTTPClient()
 	if err != nil {
 		return nil, err
 	}
 
-	return &Client{client, serverName}, nil
-}
-
-func NewAuthClient(timeout int, config common.ServerConfig) (*Client, error) {
-	// TODO:: Create and authenticate client
+	return &Client{client}, nil
 }
 
 func (c *Client) ConfigureClient(config common.ServerConfig) {
 }
 
-func (c *Client) GetServer() string {
-	return c.server
-}
+// func (c *Client) GetServer() string {
+// 	return c.server
+// }
 
-func (c *Client) GetBaseURL() string {
-	return parser.CreateBaseURL(c.server)
-}
+// func (c *Client) GetBaseURL() string {
+// 	return parser.CreateBaseURL(c.server)
+// }
 
 func (c *Client) AuthServer(ctx context.Context, server string, login string, password string) error {
 	baseURL := parser.CreateBaseURL(server)
@@ -95,13 +95,13 @@ func (c *Client) AuthServer(ctx context.Context, server string, login string, pa
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("post request failed: %w", err)
+		return fmt.Errorf("client: post request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
-		return fmt.Errorf("failed to parse html: %w", err)
+		return fmt.Errorf("client: failed to parse html: %w", err)
 	}
 
 	title := doc.Find(".title").Text()
@@ -112,17 +112,8 @@ func (c *Client) AuthServer(ctx context.Context, server string, login string, pa
 	return nil
 }
 
-func (c *Client) Auth(ctx context.Context, config AuthConfig) error {
-	var targetServer string
-	if config.Server != "" {
-		targetServer = config.Server
-	} else if c.server != "" {
-		targetServer = c.server
-	} else {
-		return fmt.Errorf("client: server address is required")
-	}
-	c.server = targetServer
-	return c.AuthServer(ctx, targetServer, config.Login, config.Password)
+func (c *Client) Auth(ctx context.Context, config common.ServerConfig) error {
+	return c.AuthServer(ctx, config.Server, config.Login, config.Password)
 }
 
 func (c *Client) Get(ctx context.Context, url string) ([]byte, error) {
@@ -145,7 +136,8 @@ func (c *Client) Get(ctx context.Context, url string) ([]byte, error) {
 	return body, nil
 }
 
-func (c *Client) GetFromBase(ctx context.Context, path string) ([]byte, error) {
-	baseURL := parser.CreateBaseURL(c.server)
-	return c.Get(ctx, baseURL+path)
+func (c *Client) GetFromServer(ctx context.Context, server string, path string) ([]byte, error) {
+	baseURL := parser.CreateBaseURL(server)
+	url := baseURL + path
+	return c.Get(ctx, url)
 }
