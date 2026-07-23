@@ -4,6 +4,7 @@ package apptesting
 import (
 	"encoding/json"
 	"fmt"
+	"iredparser/common"
 	"os"
 	"path/filepath"
 )
@@ -16,8 +17,8 @@ type Cred struct {
 	Password string `json:"password"`
 }
 
-func GetAuthConfigs() ([]Cred, error) {
-	var configs []Cred
+func GetAuthConfigs() ([]common.ServerConfig, error) {
+	var configs []common.ServerConfig
 
 	rootDir, err := findProjectRoot()
 	if err != nil {
