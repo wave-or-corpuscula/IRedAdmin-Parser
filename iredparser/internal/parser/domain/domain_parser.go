@@ -6,11 +6,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
-
 	"iredparser/internal/parser"
 	"iredparser/internal/parser/client"
 	"iredparser/pkg/utils"
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -23,15 +22,15 @@ func NewDomainParser(client *client.Client) *DomainParser {
 	return &DomainParser{client: client}
 }
 
-func (p *DomainParser) Parse(ctx context.Context) ([]*parser.Domain, error) {
-	body, err := p.client.GetFromBase(ctx, parser.DomainsListPath)
+func (p *DomainParser) Parse(ctx context.Context, server string) ([]*parser.Domain, error) {
+	body, err := p.client.GetFromServer(ctx, server, parser.DomainsListPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse domains: %w", err)
+		return nil, fmt.Errorf("domains parser: failed to parse domains: %w", err)
 	}
 
 	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(body))
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse html body: %w", err)
+		return nil, fmt.Errorf("domains parser: failed to parse html body: %w", err)
 	}
 
 	var domains []*parser.Domain
@@ -61,7 +60,7 @@ func parseRow(row *goquery.Selection) (*parser.Domain, error) {
 	memoryField := strings.TrimSpace(row.Find("td").Eq(3).Text())
 	usedQuota := strings.Split(memoryField, "/")
 	if len(usedQuota) != 2 {
-		return nil, fmt.Errorf("invalid quota format: %q, %s", memoryField, domain)
+		return nil, fmt.Errorf("domains parser: invalid quota format: %q, %s", memoryField, domain)
 	}
 	usedMemoryWithSuffix, quotaStr := strings.TrimSpace(usedQuota[0]), strings.TrimSpace(usedQuota[1])
 	usedMemory, err := utils.GetMemoryBytes(usedMemoryWithSuffix)

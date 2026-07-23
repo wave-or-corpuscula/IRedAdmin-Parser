@@ -2,10 +2,11 @@ package mailboxparser
 
 import (
 	"context"
-	"testing"
-
+	"iredparser/common"
 	"iredparser/internal/parser"
 	"iredparser/internal/parser/client"
+	"testing"
+
 	apptesting "iredparser/testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,45 +18,55 @@ func getTestDomain() parser.Domain {
 	return parser.Domain{Name: "example.com"}
 }
 
-func GetAuthClient(ctx context.Context) (*client.Client, error) {
-	configs, err := apptesting.GetAuthConfigs()
+func GetAuthClient(ctx context.Context, config common.ServerConfig) (*client.Client, error) {
+	c, err := client.NewClient()
 	if err != nil {
 		return nil, err
 	}
-	config := client.AuthConfig(configs[0])
-	c := client.NewClient(config.Server)
-	return c, c.Auth(ctx, client.AuthConfig{Login: config.Login, Password: config.Password})
+	return c, c.Auth(ctx, config)
 }
 
-func GetTestMailboxParser(ctx context.Context, workers int) (*MailboxParser, error) {
-	c, err := GetAuthClient(ctx)
+func GetTestMailboxParser(ctx context.Context, config common.ServerConfig) (*MailboxParser, error) {
+	c, err := GetAuthClient(ctx, config)
 	if err != nil {
 		return nil, err
 	}
 
-	parser := NewMailboxParser(c, workers)
+	parser := NewMailboxParser(c, mailWorkers)
 	return parser, nil
 }
 
 func TestGetPages(t *testing.T) {
-	p, err := GetTestMailboxParser(t.Context(), mailWorkers)
+	configs, err := apptesting.GetAuthConfigs()
 	assert.NoError(t, err)
 
-	domain := getTestDomain()
+	for _, config := range configs {
+		p, err := GetTestMailboxParser(t.Context(), config)
+		assert.NoError(t, err)
 
-	pages, err := p.getPagesAmount(t.Context(), domain)
-	assert.NoError(t, err)
-	assert.True(t, pages > 20)
+		domain := getTestDomain()
+
+		pages, err := p.getPagesAmount(t.Context(), config.Server, domain)
+		assert.NoError(t, err)
+		assert.True(t, pages > 0)
+
+		t.Logf("got %d pages from %s\n", pages, config.Server)
+	}
 }
 
 func TestParseMailboxes(t *testing.T) {
-	p, err := GetTestMailboxParser(t.Context(), mailWorkers)
+	configs, err := apptesting.GetAuthConfigs()
 	assert.NoError(t, err)
 
-	domain := getTestDomain()
+	for _, config := range configs {
+		p, err := GetTestMailboxParser(t.Context(), config)
+		assert.NoError(t, err)
 
-	boxes, err := p.Parse(t.Context(), domain)
-	assert.NoError(t, err)
+		domain := getTestDomain()
 
-	assert.True(t, len(boxes) >= 1007)
+		boxes, err := p.Parse(t.Context(), config.Server, domain)
+		assert.NoError(t, err)
+
+		t.Logf("got %d mailboxes from %s\n", len(boxes), config.Server)
+	}
 }

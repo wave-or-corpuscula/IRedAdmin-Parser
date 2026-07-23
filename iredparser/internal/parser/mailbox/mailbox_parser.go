@@ -5,13 +5,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"strconv"
-	"strings"
-	"sync"
-
 	"iredparser/internal/parser"
 	"iredparser/internal/parser/client"
 	"iredparser/pkg/utils"
+	"strconv"
+	"strings"
+	"sync"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -25,8 +24,8 @@ func NewMailboxParser(client *client.Client, workers int) *MailboxParser {
 	return &MailboxParser{client: client, workers: workers}
 }
 
-func (p *MailboxParser) getPagesAmount(ctx context.Context, domain parser.Domain) (int, error) {
-	body, err := p.client.GetFromBase(ctx, parser.DomainUsersPath+domain.Name)
+func (p *MailboxParser) getPagesAmount(ctx context.Context, server string, domain parser.Domain) (int, error) {
+	body, err := p.client.GetFromServer(ctx, server, parser.DomainUsersPath+domain.Name)
 	if err != nil {
 		return -1, fmt.Errorf("failed to get domain page: %w", err)
 	}
@@ -46,16 +45,16 @@ func (p *MailboxParser) getPagesAmount(ctx context.Context, domain parser.Domain
 	return pages, nil
 }
 
-func (p *MailboxParser) Parse(ctx context.Context, domain parser.Domain) ([]*parser.Mailbox, error) {
-	pages, err := p.getPagesAmount(ctx, domain)
+func (p *MailboxParser) Parse(ctx context.Context, server string, domain parser.Domain) ([]*parser.Mailbox, error) {
+	pages, err := p.getPagesAmount(ctx, server, domain)
 	if err != nil {
 		return nil, err
 	}
 
-	return p.parsePages(ctx, domain, pages)
+	return p.parsePages(ctx, server, domain, pages)
 }
 
-func (p *MailboxParser) parsePages(ctx context.Context, domain parser.Domain, pages int) ([]*parser.Mailbox, error) {
+func (p *MailboxParser) parsePages(ctx context.Context, server string, domain parser.Domain, pages int) ([]*parser.Mailbox, error) {
 	jobs := make(chan string)
 	results := make(chan []*parser.Mailbox)
 
@@ -77,10 +76,12 @@ func (p *MailboxParser) parsePages(ctx context.Context, domain parser.Domain, pa
 		})
 	}
 
+	baseURL := parser.CreateBaseURL(server)
+
 	go func() {
 		defer close(jobs)
 		for page := range pages {
-			jobs <- fmt.Sprintf("%s%s%s%s%d", p.client.GetBaseURL(), parser.DomainUsersPath, domain.Name, parser.DomainUsersPagesPath, page+1)
+			jobs <- fmt.Sprintf("%s%s%s%s%d", baseURL, parser.DomainUsersPath, domain.Name, parser.DomainUsersPagesPath, page+1)
 		}
 	}()
 
