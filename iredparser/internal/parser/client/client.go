@@ -21,12 +21,6 @@ import (
 
 const RequestTimeout = 30
 
-// type AuthConfig struct {
-// 	Server   string `json:"server"`
-// 	Login    string `json:"login"`
-// 	Password string `json:"password"`
-// }
-
 type Client struct {
 	httpClient *http.Client
 }
@@ -52,7 +46,6 @@ func createHTTPClient() (*http.Client, error) {
 	return client, nil
 }
 
-// TODO: Rewrite all code for new contructor
 func NewClient() (*Client, error) {
 	client, err := createHTTPClient()
 	if err != nil {
@@ -64,14 +57,6 @@ func NewClient() (*Client, error) {
 
 func (c *Client) ConfigureClient(config common.ServerConfig) {
 }
-
-// func (c *Client) GetServer() string {
-// 	return c.server
-// }
-
-// func (c *Client) GetBaseURL() string {
-// 	return parser.CreateBaseURL(c.server)
-// }
 
 func (c *Client) AuthServer(ctx context.Context, server string, login string, password string) error {
 	baseURL := parser.CreateBaseURL(server)
