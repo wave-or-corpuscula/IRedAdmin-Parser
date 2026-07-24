@@ -13,7 +13,7 @@ func (c *CLIController) NewAuthCheckCmd() *cobra.Command {
 				map[string]any{
 					"authenticated": true,
 					"server":        c.config.Server,
-					// TODO: Send cookie token
+					"cookie_string": c.Client.GetCookieString(),
 				},
 			)
 			return nil
