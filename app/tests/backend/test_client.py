@@ -42,6 +42,7 @@ def test_auth_check_valid(get_auth_configs):
         resp = client.auth_check(config)
         assert resp.authenticated
         assert resp.server == config.server
+        assert len(resp.cookie_string) > 0
 
 
 # TODO:: скорее всего бд не успевает закрываться и поэтому иногда выдает database is locked (5) (SQLITE_BUSY). Разобраться

@@ -33,12 +33,14 @@ class CLIResponse:
 class AuthResponse:
     authenticated: bool
     server: str
+    cookie_string: str
 
     @classmethod
     def from_response(cls, resp: CLIResponse) -> "AuthResponse":
         return cls(
             authenticated=resp.data["authenticated"],  # type: ignore
             server=resp.data["server"],  # type: ignore
+            cookie_string=resp.data["cookie_string"], # type: ignore
         )
 
 
