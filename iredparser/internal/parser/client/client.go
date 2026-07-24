@@ -22,7 +22,8 @@ import (
 const RequestTimeout = 30
 
 type Client struct {
-	httpClient *http.Client
+	httpClient   *http.Client
+	cookieString string
 }
 
 func createHTTPClient() (*http.Client, error) {
@@ -52,7 +53,7 @@ func NewClient() (*Client, error) {
 		return nil, err
 	}
 
-	return &Client{client}, nil
+	return &Client{httpClient: client}, nil
 }
 
 func (c *Client) ConfigureClient(config common.ServerConfig) {
@@ -94,6 +95,14 @@ func (c *Client) AuthServer(ctx context.Context, server string, login string, pa
 		return apperrors.ErrInvalidCredentials
 	}
 
+	cookies := c.httpClient.Jar.Cookies(req.URL)
+	for _, cookie := range cookies {
+		if cookie.Name == "iRedAdmin-LDAP" {
+			c.cookieString = fmt.Sprintf("%s=%s", cookie.Name, cookie.Value)
+			break
+		}
+	}
+
 	return nil
 }
 
@@ -125,4 +134,8 @@ func (c *Client) GetFromServer(ctx context.Context, server string, path string) 
 	baseURL := parser.CreateBaseURL(server)
 	url := baseURL + path
 	return c.Get(ctx, url)
+}
+
+func (c *Client) GetCookieString() string {
+	return c.cookieString
 }
