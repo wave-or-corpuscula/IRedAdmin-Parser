@@ -1,13 +1,20 @@
 import pytest
+from pathlib import Path
 
 from app.storage import ConfigStorage, Credentials
 
-N = 10
+N = 10 # Number of test credentials created
+test_storage_path = "app/tests/.iredcreds.test.json"
 
+
+@pytest.fixture(scope="module", autouse=True)
+def cleanup_test_file():
+    path = Path(test_storage_path)
+    path.unlink(missing_ok=True)
 
 @pytest.fixture
 def test_storage() -> ConfigStorage:
-    return ConfigStorage("app/tests/.iredcreds.test.json")
+    return ConfigStorage(test_storage_path)
 
 
 def server_creds_factory():
@@ -57,3 +64,16 @@ def test_config_storage_delete(test_storage):
         creds = factory(i)
         saved = storage.get(creds.server)
         assert saved is None
+
+
+def test_duplicate_credentials(test_storage):
+    storage = test_storage
+    factory = server_creds_factory()
+
+    cred = factory(1)
+    storage.save(cred)
+    storage.save(cred)
+    
+    creds = storage.get_all()
+    assert len(creds) == 1
+

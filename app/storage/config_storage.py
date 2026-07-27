@@ -19,6 +19,9 @@ class ConfigStorage:
         self.path = path
 
     def save(self, creds: Credentials):
+        if self.get(creds.server) is not None:
+            return
+
         storage = self._load()
 
         storage.append(asdict(creds))
