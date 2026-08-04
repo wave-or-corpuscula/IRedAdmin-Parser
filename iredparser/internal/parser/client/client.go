@@ -8,6 +8,7 @@ import (
 	"io"
 	"iredparser/common"
 	"iredparser/internal/parser"
+	"iredparser/pkg/utils"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
@@ -15,8 +16,6 @@ import (
 	"time"
 
 	apperrors "iredparser/pkg/errors"
-
-	"github.com/PuerkitoBio/goquery"
 )
 
 const RequestTimeout = 30
@@ -63,6 +62,10 @@ func (c *Client) AuthServer(ctx context.Context, server string, login string, pa
 	baseURL := parser.CreateBaseURL(server)
 	loginURL := baseURL + parser.LoginPath
 
+	return c.AuthServerURL(ctx, loginURL, login, password)
+}
+
+func (c *Client) AuthServerURL(ctx context.Context, loginURL string, login string, password string) error {
 	data := url.Values{}
 	data.Set("username", login)
 	data.Set("password", password)
@@ -77,7 +80,7 @@ func (c *Client) AuthServer(ctx context.Context, server string, login string, pa
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36")
 	req.Header.Set("Referer", loginURL)
-	req.Header.Set("Origin", baseURL)
+	// req.Header.Set("Origin", baseURL)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -85,14 +88,9 @@ func (c *Client) AuthServer(ctx context.Context, server string, login string, pa
 	}
 	defer resp.Body.Close()
 
-	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	err = utils.GetLoginErrorMessage(resp.Body)
 	if err != nil {
-		return fmt.Errorf("client: failed to parse html: %w", err)
-	}
-
-	title := doc.Find(".title").Text()
-	if strings.Contains(title, "Login") {
-		return apperrors.ErrInvalidCredentials
+		return err
 	}
 
 	cookies := c.httpClient.Jar.Cookies(req.URL)
