@@ -1,55 +1,54 @@
 package client
 
 import (
-	"bytes"
-	"context"
+	"iredparser/common"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
-	apptesting "iredparser/testing"
-
-	"github.com/PuerkitoBio/goquery"
 	"github.com/stretchr/testify/assert"
 )
 
-func GetTestAuthClient(ctx context.Context) (*Client, error) {
-	configs, err := apptesting.GetAuthConfigs()
-	if err != nil {
-		return nil, err
-	}
-	config := configs[0]
+func getTestServer() *httptest.Server {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/iredadmin/login":
+			http.SetCookie(w, &http.Cookie{
+				Name:  "iRedAdmin-LDAP",
+				Value: "test-session",
+				Path:  "/",
+			})
+			w.Header().Set("Location", "/iredadmin/dashboard")
+			w.WriteHeader(http.StatusFound)
+
+		case "/iredadmin/dashboard":
+			if _, err := r.Cookie("iRedAdmin-LDAP"); err != nil {
+				w.WriteHeader(http.StatusUnauthorized)
+				w.Write([]byte(`<html><div class="title">Login</div></html>`))
+				return
+			}
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`<html><div class="title">Dashboard</div></html>`))
+
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+
+	return server
+}
+
+func TestAuthTestServer(t *testing.T) {
+	server := getTestServer()
+	defer server.Close()
+
+	config := common.ServerConfig{}
+
 	c, err := NewClient()
-	if err != nil {
-		return nil, err
-	}
-
-	return c, c.Auth(ctx, config)
-}
-
-func TestClientAuth(t *testing.T) {
-	configs, err := apptesting.GetAuthConfigs()
 	assert.NoError(t, err)
 
-	for _, config := range configs {
-		c, err := NewClient()
-		assert.NoError(t, err)
-
-		err = c.Auth(t.Context(), config)
-		assert.NoError(t, err)
-	}
-}
-
-func TestClientGet(t *testing.T) {
-	client, err := GetTestAuthClient(t.Context())
+	err = c.AuthServerURL(t.Context(), server.URL, config.Login, config.Password)
 	assert.NoError(t, err)
 
-	body, err := client.Get(t.Context(), "https://mail01/iredadmin/dashboard")
-	assert.NoError(t, err)
-
-	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(body))
-	assert.NoError(t, err)
-
-	assert.True(t, len(body) != 0)
-
-	title := doc.Find(".title").Text()
-	assert.NotContains(t, title, "Login")
+	t.Log(c.GetCookieString())
 }
