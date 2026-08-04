@@ -2,12 +2,16 @@
 package utils
 
 import (
+	"bytes"
+	"fmt"
+	"io"
+	"iredparser/pkg/errors"
 	"log"
 	"math"
 	"strconv"
 	"strings"
 
-	"iredparser/pkg/errors"
+	"github.com/PuerkitoBio/goquery"
 )
 
 func GetMemoryBytes(memWithSuffix string) (int64, error) {
@@ -36,4 +40,30 @@ func GetMemoryBytes(memWithSuffix string) (int64, error) {
 		log.Fatalf("invalid memory value: %q, %s\n", usedMemoryStr, err)
 	}
 	return int64(usedMemory * math.Pow(1000, float64(suffixInd))), nil
+}
+
+func GetLoginErrorMessage(body io.ReadCloser) error {
+	content, err := io.ReadAll(body)
+	if err != nil {
+		return fmt.Errorf("utils: cannot read bytes from http-response: %w", err)
+	}
+
+	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(content))
+	if err != nil {
+		return fmt.Errorf("utils: cannot create document from http-response: %w", err)
+	}
+
+	p := doc.Find(".note-error").Find("p")
+	errMessage := strings.TrimSpace(p.Clone().Find("strong").Remove().End().Text())
+
+	switch {
+	case strings.Contains(errMessage, "required"):
+		return errors.ErrLoginRequired
+	case strings.Contains(errMessage, "must be an valid email"):
+		return errors.ErrInvalidUsername
+	case strings.Contains(errMessage, "or password is incorrect"):
+		return errors.ErrIncorrectCredentials
+	}
+
+	return nil
 }
