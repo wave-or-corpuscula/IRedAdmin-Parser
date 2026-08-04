@@ -140,7 +140,7 @@ func (c *CLIController) InitCommands() *cobra.Command {
 		defer cancel()
 
 		err = c.AuthService.AuthClient(ctx, c.Client, cfg)
-		if errors.Is(err, apperrors.ErrInvalidCredentials) {
+		if errors.Is(err, apperrors.ErrIncorrectCredentials) {
 			return &CLIError{
 				Code: ErrCliInvalidCredentials,
 				Err:  err,
