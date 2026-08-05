@@ -91,3 +91,22 @@ func TestClientGet(t *testing.T) {
 	title := doc.Find(".title").Text()
 	assert.NotContains(t, title, "Login")
 }
+
+func TestGetCSRFToken(t *testing.T) {
+	configs, err := apptesting.GetAuthConfigs()
+	assert.NoError(t, err)
+
+	config := configs[0]
+
+	c, err := NewClient()
+	assert.NoError(t, err)
+
+	err = c.Auth(t.Context(), config)
+	assert.NoError(t, err)
+
+	mailbox := config.Login
+
+	token, err := c.GetCSRFToken(t.Context(), config.Server, mailbox)
+	assert.NoError(t, err)
+	assert.True(t, len(token) > 0)
+}
