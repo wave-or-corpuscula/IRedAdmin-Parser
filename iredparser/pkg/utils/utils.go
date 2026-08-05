@@ -118,3 +118,17 @@ func GetLoginErrorMessage(body io.ReadCloser) error {
 
 	return nil
 }
+
+func ExtractCSRFToken(body []byte) (string, error) {
+	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(body))
+	if err != nil {
+		return "", fmt.Errorf("utils: cannot create document: %w", err)
+	}
+
+	token, ok := doc.Find("input[name='csrf_token']").Attr("value")
+	if !ok {
+		return "", errors.ErrCannoFinsCSRFToken
+	}
+
+	return token, nil
+}
