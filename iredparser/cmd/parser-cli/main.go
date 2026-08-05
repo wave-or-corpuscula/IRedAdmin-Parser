@@ -14,6 +14,7 @@ import (
 	syncservice "iredparser/internal/sync"
 	syncdomain "iredparser/internal/sync/domain"
 	syncmailbox "iredparser/internal/sync/mailbox"
+	apperrors "iredparser/pkg/errors"
 )
 
 func main() {
@@ -42,13 +43,17 @@ func main() {
 
 	rootCmd := ctrl.InitCommands()
 
-	var clierr *controller.CLIError
+	var clierr *apperrors.IRedError
 
 	if err := controller.Execute(rootCmd); err != nil {
 		if errors.As(err, &clierr) {
-			ctrl.SendError(clierr.Code, clierr.Err)
+			ctrl.SendIRedError(clierr)
 		} else {
-			ctrl.SendError(controller.ErrCli, err)
+			ctrl.SendError(
+				string(apperrors.ErrTypeCLI),
+				int(apperrors.ErrCodeCLIUnknown),
+				err,
+			)
 		}
 	}
 }
