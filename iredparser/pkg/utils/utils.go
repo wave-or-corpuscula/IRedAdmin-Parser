@@ -3,16 +3,67 @@ package utils
 
 import (
 	"bytes"
+	"crypto/rand"
 	"fmt"
 	"io"
 	"iredparser/pkg/errors"
 	"log"
 	"math"
+	"math/big"
 	"strconv"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 )
+
+const (
+	lowerLetters = "abcdefghijklmnopqrstuvwxyz"
+	upperLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	digits       = "0123456789"
+	specials     = "#$%&*+-,.:;!=<>?'\"?@[]/(){}_`~"
+)
+
+func GeneratePassword() (string, error) {
+	const length = 10
+
+	result := make([]byte, length)
+
+	groups := []string{lowerLetters, upperLetters, digits, specials}
+	for i, group := range groups {
+		idx, err := cryptoRandInt(len(group))
+		if err != nil {
+			return "", err
+		}
+		result[i] = group[idx]
+	}
+
+	allChars := lowerLetters + upperLetters + digits + specials
+	for i := 4; i < length; i++ {
+		idx, err := cryptoRandInt(len(allChars))
+		if err != nil {
+			return "", err
+		}
+		result[i] = allChars[idx]
+	}
+
+	for i := length - 1; i > 0; i-- {
+		j, err := cryptoRandInt(i + 1)
+		if err != nil {
+			return "", err
+		}
+		result[i], result[j] = result[j], result[i]
+	}
+
+	return string(result), nil
+}
+
+func cryptoRandInt(max int) (int, error) {
+	nBig, err := rand.Int(rand.Reader, big.NewInt(int64(max)))
+	if err != nil {
+		return 0, err
+	}
+	return int(nBig.Int64()), nil
+}
 
 func GetMemoryBytes(memWithSuffix string) (int64, error) {
 	if memWithSuffix == "0" {
