@@ -23,6 +23,7 @@ const (
 
 	// Parsig codes
 	ErrCodeInvalidMemorySuffix ErrCode = 2001
+	ErrCodeCannoFinsCSRFToken  ErrCode = 2002
 
 	// Authentication codes
 	ErrCodeLoginRequired        ErrCode = 3001
@@ -47,6 +48,7 @@ var (
 
 	// Parsing errors
 	ErrInvalidMemorySuffix = New(ErrTypeParsing, ErrCodeInvalidMemorySuffix, errors.New("invalid memory size suffix"))
+	ErrCannoFinsCSRFToken  = New(ErrTypeParsing, ErrCodeCannoFinsCSRFToken, errors.New("cannot find csrf token"))
 
 	// Authentication errors
 	ErrLoginRequired        = New(ErrTypeAuthentication, ErrCodeLoginRequired, errors.New("login required"))
