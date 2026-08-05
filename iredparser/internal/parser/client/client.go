@@ -108,6 +108,21 @@ func (c *Client) Auth(ctx context.Context, config common.ServerConfig) error {
 	return c.AuthServer(ctx, config.Server, config.Login, config.Password)
 }
 
+func (c *Client) GetCSRFToken(ctx context.Context, server string, mailbox string) (string, error) {
+	url := parser.CreateChangePasswordPath(server, mailbox)
+	body, err := c.Get(ctx, url)
+	if err != nil {
+		return "", err
+	}
+
+	token, err := utils.ExtractCSRFToken(body)
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
+}
+
 func (c *Client) Get(ctx context.Context, url string) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
