@@ -1,5 +1,6 @@
 import json
 import subprocess
+from typing import Optional
 
 from app.backend import BackendError
 from app.backend.models import AuthResponse, CLIResponse, SyncResponse
@@ -30,9 +31,10 @@ class IRedParserClient:
 
         return SyncResponse.from_response(resp)
 
-    def _run(self, *args) -> CLIResponse:
+    def _run(self, *args, stdin_data: Optional[str] = None) -> CLIResponse:
         process = subprocess.run(
             [self.binary, *args],
+            input=stdin_data,
             capture_output=True,
             text=True,
         )
