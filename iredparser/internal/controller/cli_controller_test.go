@@ -13,7 +13,7 @@ import (
 	domainparser "iredparser/internal/parser/domain"
 	mailboxparser "iredparser/internal/parser/mailbox"
 	authservice "iredparser/internal/services/auth_service"
-	passwordservice "iredparser/internal/services/change_password_service"
+	passwordservice "iredparser/internal/services/password_service"
 	syncservice "iredparser/internal/sync"
 	syncdomain "iredparser/internal/sync/domain"
 	syncmailbox "iredparser/internal/sync/mailbox"
