@@ -9,6 +9,7 @@ from app.services.config_service import ConfigService
 from app.storage.config_storage import ConfigStorage
 from app.tui.screens.config.config_screen import ConfigScreen
 from app.tui.screens.search.search_screen import SearchScreen
+from app.tui.screens.change_password import ChangePasswordScreen
 
 
 class MainMenuScreen(App):
@@ -28,12 +29,8 @@ class MainMenuScreen(App):
 
     @on(Button.Pressed, "#tools_button")
     def nav_tools_screen(self) -> None:
-        self.notify(
-            title="Comming soon",
-            message="Инструменты пока недоступны!",
-            severity="information",
-            timeout=5,
-        )
+        passwords_change_screen = ChangePasswordScreen()
+        self.push_screen(passwords_change_screen)
 
     @on(Button.Pressed, "#config-button")
     def nav_config_screen(self) -> None:
