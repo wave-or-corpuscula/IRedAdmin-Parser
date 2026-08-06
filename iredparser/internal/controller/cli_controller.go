@@ -17,17 +17,19 @@ import (
 )
 
 const (
-	Workers = 30
-	DSN     = "data/ireddata.db"
+	Workers   = 30
+	PassLenth = 10
+	DSN       = "data/ireddata.db"
 )
 
 type CLIController struct {
-	Client      *client.Client
-	Storage     *database.Database
-	AuthService AuthChecker
-	SyncService SyncService
-	outWriter   io.Writer
-	config      common.ServerConfig
+	Client          *client.Client
+	Storage         *database.Database
+	AuthService     AuthChecker
+	SyncService     SyncService
+	PasswordService PasswordChanger
+	outWriter       io.Writer
+	config          common.ServerConfig
 }
 
 func NewCLIController(
@@ -35,14 +37,16 @@ func NewCLIController(
 	storage *database.Database,
 	authcService AuthChecker,
 	syncService SyncService,
+	passwordService PasswordChanger,
 	out io.Writer,
 ) *CLIController {
 	return &CLIController{
-		Client:      client,
-		Storage:     storage,
-		SyncService: syncService,
-		AuthService: authcService,
-		outWriter:   out,
+		Client:          client,
+		Storage:         storage,
+		SyncService:     syncService,
+		AuthService:     authcService,
+		PasswordService: passwordService,
+		outWriter:       out,
 	}
 }
 
@@ -98,6 +102,7 @@ func (c *CLIController) InitCommands() *cobra.Command {
 
 	rootCmd.AddCommand(c.NewAuthCheckCmd())
 	rootCmd.AddCommand(c.NewSyncMailboxesCmd())
+	rootCmd.AddCommand(c.NewChangePasswordCmd())
 
 	return rootCmd
 }
