@@ -4,9 +4,10 @@ package utils
 import (
 	"bytes"
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"io"
-	"iredparser/pkg/errors"
+	apperrors "iredparser/pkg/errors"
 	"log"
 	"math"
 	"math/big"
@@ -20,12 +21,10 @@ const (
 	lowerLetters = "abcdefghijklmnopqrstuvwxyz"
 	upperLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	digits       = "0123456789"
-	specials     = "#$%&*+-,.:;!=<>?'\"?@[]/(){}_`~"
+	specials     = "#$%&*+-.:;!=<>?'\"?@[]/(){}_`~" // no comma
 )
 
-func GeneratePassword() (string, error) {
-	const length = 10
-
+func GeneratePassword(length int) (string, error) {
 	result := make([]byte, length)
 
 	groups := []string{lowerLetters, upperLetters, digits, specials}
@@ -82,7 +81,7 @@ func GetMemoryBytes(memWithSuffix string) (int64, error) {
 			return -1, nil
 		}
 		log.Printf("unknown memory size suffix: %q\n", memWithSuffix)
-		return -1, errors.ErrInvalidMemorySuffix
+		return -1, apperrors.ErrInvalidMemorySuffix
 	}
 
 	usedMemoryStr := strings.TrimSpace(strings.TrimSuffix(memWithSuffix, memorySuffix[suffixInd]))
@@ -93,7 +92,7 @@ func GetMemoryBytes(memWithSuffix string) (int64, error) {
 	return int64(usedMemory * math.Pow(1000, float64(suffixInd))), nil
 }
 
-func GetLoginErrorMessage(body io.ReadCloser) error {
+func ExtractLoginError(body io.ReadCloser) error {
 	content, err := io.ReadAll(body)
 	if err != nil {
 		return fmt.Errorf("utils: cannot read bytes from http-response: %w", err)
@@ -105,18 +104,51 @@ func GetLoginErrorMessage(body io.ReadCloser) error {
 	}
 
 	p := doc.Find(".note-error").Find("p")
-	errMessage := strings.TrimSpace(p.Clone().Find("strong").Remove().End().Text())
+	errMessage := getErrorMessageFromP(p)
 
 	switch {
 	case strings.Contains(errMessage, "required"):
-		return errors.ErrLoginRequired
+		return apperrors.ErrLoginRequired
 	case strings.Contains(errMessage, "must be an valid email"):
-		return errors.ErrInvalidUsername
+		return apperrors.ErrInvalidUsername
 	case strings.Contains(errMessage, "or password is incorrect"):
-		return errors.ErrIncorrectCredentials
+		return apperrors.ErrIncorrectCredentials
 	}
 
 	return nil
+}
+
+func ExtractChangePasswordErrors(body io.ReadCloser) error {
+	content, err := io.ReadAll(body)
+	if err != nil {
+		return fmt.Errorf("utils: cannot read bytes from http-response: %w", err)
+	}
+
+	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(content))
+	if err != nil {
+		return fmt.Errorf("utils: cannot create document from http-response: %w", err)
+	}
+
+	var errs []error
+	notes := doc.Find(".note-error")
+	notes.Each(func(_ int, note *goquery.Selection) {
+		errMessage := getErrorMessageFromP(note.Find("p"))
+		errs = append(errs, apperrors.New(
+			apperrors.ErrTypeParsing,
+			apperrors.ErrCodeChangePassowrd,
+			errors.New(errMessage),
+		))
+	})
+
+	if len(errs) != 0 {
+		return apperrors.IRedMultiError(errs)
+	}
+
+	return nil
+}
+
+func getErrorMessageFromP(p *goquery.Selection) string {
+	return strings.TrimSpace(p.Clone().Find("strong").Remove().End().Text())
 }
 
 func ExtractCSRFToken(body []byte) (string, error) {
@@ -127,7 +159,7 @@ func ExtractCSRFToken(body []byte) (string, error) {
 
 	token, ok := doc.Find("input[name='csrf_token']").Attr("value")
 	if !ok {
-		return "", errors.ErrCannoFinsCSRFToken
+		return "", apperrors.ErrCannoFindCSRFToken
 	}
 
 	return token, nil

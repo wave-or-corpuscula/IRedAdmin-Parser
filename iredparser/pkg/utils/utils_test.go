@@ -9,7 +9,7 @@ import (
 func TestGeneratePasswords(t *testing.T) {
 	N := 1000
 	for range N {
-		password, err := GeneratePassword()
+		password, err := GeneratePassword(10)
 		assert.NoError(t, err)
 		assert.Len(t, password, 10)
 	}
