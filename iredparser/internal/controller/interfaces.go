@@ -4,11 +4,10 @@ import (
 	"context"
 	"iredparser/common"
 	"iredparser/internal/database"
-	"iredparser/internal/parser/client"
 )
 
 type AuthChecker interface {
-	AuthClient(ctx context.Context, c *client.Client, config common.ServerConfig) error
+	AuthClient(ctx context.Context, config common.ServerConfig) error
 }
 
 type SyncService interface {

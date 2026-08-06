@@ -10,10 +10,12 @@ type AuthService struct {
 	client *client.Client
 }
 
-func NewAuthService() *AuthService {
-	return &AuthService{}
+func NewAuthService(client *client.Client) *AuthService {
+	return &AuthService{
+		client: client,
+	}
 }
 
-func (a *AuthService) AuthClient(ctx context.Context, c *client.Client, config common.ServerConfig) error {
-	return c.Auth(ctx, config)
+func (a *AuthService) AuthClient(ctx context.Context, config common.ServerConfig) error {
+	return a.client.Auth(ctx, config)
 }
