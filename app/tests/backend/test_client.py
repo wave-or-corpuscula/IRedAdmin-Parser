@@ -10,6 +10,7 @@ from app.utils.config import ServerConfig
 
 BINARY_PATH = "./iredparser/bin/iredparser"
 TEST_CONFIG_PATH = ".test.creds.json"
+TEST_MAILBOX = "test@rmzu.by"
 
 
 @pytest.fixture
@@ -58,3 +59,10 @@ def test_sync_mailboxes(get_auth_configs):
         except BackendError as e:
             print(e)
             raise
+
+def test_change_password(get_auth_configs):
+    client = IRedParserClient(BINARY_PATH)
+    for config in get_auth_configs:
+        resp = client.change_password(config, TEST_MAILBOX)
+        assert resp.mailbox == TEST_MAILBOX
+        assert len(resp.password) > 7

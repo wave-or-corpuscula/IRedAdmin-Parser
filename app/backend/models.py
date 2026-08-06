@@ -51,8 +51,20 @@ class SyncResponse:
 
     @classmethod
     def from_response(cls, resp: CLIResponse) -> "SyncResponse":
-        print(resp.data)
         return cls(
             server=resp.data["server"],  # type: ignore
             amount=resp.data["amount"],  # type: ignore
         )
+
+@dataclass
+class PasswordResponse:
+    mailbox: str
+    password: str
+
+    @classmethod
+    def from_response(cls, resp: CLIResponse) -> "PasswordResponse":
+        return cls(
+            mailbox=resp.data["mailbox"],   # type: ignore
+            password=resp.data["password"]  # type: ignore
+        )
+
