@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"iredparser/common"
 	"iredparser/pkg/errors"
+	"iredparser/pkg/utils"
 	"testing"
 
 	apptesting "iredparser/testing"
@@ -13,6 +14,8 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/stretchr/testify/assert"
 )
+
+const testMailbox = "test@rmzu.by"
 
 func GetTestAuthClient(ctx context.Context) (*Client, error) {
 	configs, err := apptesting.GetAuthConfigs()
@@ -109,4 +112,23 @@ func TestGetCSRFToken(t *testing.T) {
 	token, err := c.GetCSRFToken(t.Context(), config.Server, mailbox)
 	assert.NoError(t, err)
 	assert.True(t, len(token) > 0)
+}
+
+func TestChangePassword(t *testing.T) {
+	configs, err := apptesting.GetAuthConfigs()
+	assert.NoError(t, err)
+
+	config := configs[0]
+
+	c, err := NewClient()
+	assert.NoError(t, err)
+
+	err = c.Auth(t.Context(), config)
+	assert.NoError(t, err)
+
+	newPass, err := utils.GeneratePassword(10)
+	assert.NoError(t, err)
+
+	err = c.ChangePassword(t.Context(), config.Server, testMailbox, newPass)
+	assert.NoError(t, err)
 }
