@@ -80,7 +80,7 @@ func (c *CLIController) InitCommands() *cobra.Command {
 		ctx, cancel := context.WithTimeout(cmd.Context(), time.Duration(10)*time.Second)
 		defer cancel()
 
-		err = c.AuthService.AuthClient(ctx, c.Client, cfg)
+		err = c.AuthService.AuthClient(ctx, cfg)
 		if apperrors.IsType(err, apperrors.ErrTypeAuthentication) {
 			return err
 		} else if err != nil {

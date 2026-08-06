@@ -26,7 +26,7 @@ func getTestCLIController(buf *bytes.Buffer, config common.ServerConfig) (*CLICo
 	if err != nil {
 		return nil, err
 	}
-	authService := authservice.NewAuthService()
+	authService := authservice.NewAuthService(httpClient)
 
 	db, err := database.Connect(":memory:")
 	log.Println(err)

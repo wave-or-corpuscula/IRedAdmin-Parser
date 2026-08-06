@@ -23,7 +23,7 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	authService := authservice.NewAuthService()
+	authService := authservice.NewAuthService(httpClient)
 
 	db, err := database.Connect(controller.DSN)
 	if err != nil {
