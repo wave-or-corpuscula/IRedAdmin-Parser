@@ -13,6 +13,7 @@ import (
 	domainparser "iredparser/internal/parser/domain"
 	mailboxparser "iredparser/internal/parser/mailbox"
 	authservice "iredparser/internal/services/auth_service"
+	passwordservice "iredparser/internal/services/change_password_service"
 	syncservice "iredparser/internal/sync"
 	syncdomain "iredparser/internal/sync/domain"
 	syncmailbox "iredparser/internal/sync/mailbox"
@@ -46,8 +47,9 @@ func getTestCLIController(buf *bytes.Buffer, config common.ServerConfig) (*CLICo
 	domainSyncService := syncdomain.NewDomainSyncService(domainParser, db)
 
 	syncService := syncservice.NewSyncService(mailboxSyncService, domainSyncService)
+	passwordService := passwordservice.NewPasswordService(httpClient)
 
-	ctrl := NewCLIController(httpClient, db, authService, syncService, buf)
+	ctrl := NewCLIController(httpClient, db, authService, syncService, passwordService, buf)
 
 	return ctrl, nil
 }
@@ -113,4 +115,30 @@ func TestSyncCLI(t *testing.T) {
 
 		ctrl.Storage.Close()
 	}
+}
+
+func TestChangePasswordCLI(t *testing.T) {
+	configs, err := apptesting.GetAuthConfigs()
+	assert.NoError(t, err)
+
+	config := configs[0]
+
+	jsonData, err := json.Marshal(config)
+	assert.NoError(t, err)
+
+	buf := new(bytes.Buffer)
+	ctrl, err := getTestCLIController(buf, config)
+	assert.NoError(t, err)
+
+	rootCmd := ctrl.InitCommands()
+	assert.NotNil(t, rootCmd)
+
+	rootCmd.SetArgs([]string{
+		"change-password",
+		"--config", string(jsonData),
+		"-m", client.TestMailbox,
+	})
+
+	err = rootCmd.Execute()
+	assert.NoError(t, err)
 }
