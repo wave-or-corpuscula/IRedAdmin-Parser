@@ -4,6 +4,7 @@ package errors
 import (
 	"errors"
 	"fmt"
+	"strings"
 )
 
 const (
@@ -24,6 +25,7 @@ const (
 	// Parsig codes
 	ErrCodeInvalidMemorySuffix ErrCode = 2001
 	ErrCodeCannoFinsCSRFToken  ErrCode = 2002
+	ErrCodeChangePassowrd      ErrCode = 2002
 
 	// Authentication codes
 	ErrCodeLoginRequired        ErrCode = 3001
@@ -48,7 +50,7 @@ var (
 
 	// Parsing errors
 	ErrInvalidMemorySuffix = New(ErrTypeParsing, ErrCodeInvalidMemorySuffix, errors.New("invalid memory size suffix"))
-	ErrCannoFinsCSRFToken  = New(ErrTypeParsing, ErrCodeCannoFinsCSRFToken, errors.New("cannot find csrf token"))
+	ErrCannoFindCSRFToken  = New(ErrTypeParsing, ErrCodeCannoFinsCSRFToken, errors.New("cannot find csrf token"))
 
 	// Authentication errors
 	ErrLoginRequired        = New(ErrTypeAuthentication, ErrCodeLoginRequired, errors.New("login required"))
@@ -108,4 +110,23 @@ func IsType(err error, errType ErrType) bool {
 	}
 
 	return false
+}
+
+type IRedMultiError []error
+
+func (m IRedMultiError) Error() string {
+	if len(m) == 0 {
+		return ""
+	}
+
+	msgs := make([]string, len(m))
+	for i, err := range m {
+		msgs[i] = err.Error()
+	}
+
+	return strings.Join(msgs, "; ")
+}
+
+func (m IRedMultiError) Unwrap() []error {
+	return []error(m)
 }
