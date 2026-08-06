@@ -1,4 +1,4 @@
-from .server_config_block import ServerConfigBlock
 from .server_config_widget import ServerConfigWidget
+from .mailbox_widget import ChangeMailboxWidget
 
-__all__ = [ServerConfigBlock, ServerConfigWidget]
+__all__ = [ServerConfigWidget, ChangeMailboxWidget]
