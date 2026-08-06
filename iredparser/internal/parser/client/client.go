@@ -18,7 +18,10 @@ import (
 	apperrors "iredparser/pkg/errors"
 )
 
-const RequestTimeout = 30
+const (
+	RequestTimeout = 30
+	TestMailbox    = "test@rmzu.by"
+)
 
 type Client struct {
 	httpClient   *http.Client

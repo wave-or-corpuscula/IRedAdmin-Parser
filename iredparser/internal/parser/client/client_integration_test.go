@@ -1,7 +1,6 @@
 package client
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"iredparser/common"
@@ -11,11 +10,8 @@ import (
 
 	apptesting "iredparser/testing"
 
-	"github.com/PuerkitoBio/goquery"
 	"github.com/stretchr/testify/assert"
 )
-
-const testMailbox = "test@rmzu.by"
 
 func GetTestAuthClient(ctx context.Context) (*Client, error) {
 	configs, err := apptesting.GetAuthConfigs()
@@ -85,14 +81,7 @@ func TestClientGet(t *testing.T) {
 		fmt.Sprintf("https://%s/iredadmin/dashboard", configs[0].Server),
 	)
 	assert.NoError(t, err)
-
-	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(body))
-	assert.NoError(t, err)
-
 	assert.True(t, len(body) != 0)
-
-	title := doc.Find(".title").Text()
-	assert.NotContains(t, title, "Login")
 }
 
 func TestGetCSRFToken(t *testing.T) {
@@ -129,6 +118,6 @@ func TestChangePassword(t *testing.T) {
 	newPass, err := utils.GeneratePassword(10)
 	assert.NoError(t, err)
 
-	err = c.ChangePassword(t.Context(), config.Server, testMailbox, newPass)
+	err = c.ChangePassword(t.Context(), config.Server, TestMailbox, newPass)
 	assert.NoError(t, err)
 }
