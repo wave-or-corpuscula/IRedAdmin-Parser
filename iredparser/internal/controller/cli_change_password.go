@@ -28,6 +28,13 @@ func (c *CLIController) NewChangePasswordCmd() *cobra.Command {
 				return err
 			}
 
+			c.sendResponse(
+				map[string]string{
+					"mailbox":  mailbox,
+					"password": password,
+				},
+			)
+
 			return nil
 		},
 	}
