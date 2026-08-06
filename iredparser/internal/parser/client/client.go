@@ -80,7 +80,6 @@ func (c *Client) AuthServerURL(ctx context.Context, loginURL string, login strin
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36")
 	req.Header.Set("Referer", loginURL)
-	// req.Header.Set("Origin", baseURL)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -88,7 +87,7 @@ func (c *Client) AuthServerURL(ctx context.Context, loginURL string, login strin
 	}
 	defer resp.Body.Close()
 
-	err = utils.GetLoginErrorMessage(resp.Body)
+	err = utils.ExtractLoginError(resp.Body)
 	if err != nil {
 		return err
 	}
@@ -106,6 +105,48 @@ func (c *Client) AuthServerURL(ctx context.Context, loginURL string, login strin
 
 func (c *Client) Auth(ctx context.Context, config common.ServerConfig) error {
 	return c.AuthServer(ctx, config.Server, config.Login, config.Password)
+}
+
+func (c *Client) ChangePassword(ctx context.Context, server string, mailbox string, newPassword string) error {
+	csrfToken, err := c.GetCSRFToken(ctx, server, mailbox)
+	if err != nil {
+		return fmt.Errorf("client: failed to get CSRF token: %w", err)
+	}
+
+	changeURL := parser.CreateChangePasswordPath(server, mailbox)
+
+	data := url.Values{}
+	data.Set("csrf_token", csrfToken)
+	data.Set("newpw", newPassword)
+	data.Set("confirmpw", newPassword)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, changeURL, strings.NewReader(data.Encode()))
+	if err != nil {
+		return apperrors.ErrPostRequestCreation
+	}
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36")
+	req.Header.Set("Referer", changeURL)
+	req.Header.Set("Origin", server)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("client: change password request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("change password failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	err = utils.ExtractChangePasswordErrors(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *Client) GetCSRFToken(ctx context.Context, server string, mailbox string) (string, error) {
