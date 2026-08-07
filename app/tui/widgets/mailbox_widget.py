@@ -1,4 +1,5 @@
 from textual import on
+from textual.message import Message
 from textual.containers import Horizontal, Container, Vertical, ScrollableContainer
 from textual.widget import Widget
 from textual.widgets import Button, Header, Footer, Label, Input, Static
@@ -7,6 +8,10 @@ from textual.app import ComposeResult
 
 class ChangeMailboxWidget(Widget):
     CSS_PATH = "../../styles.tcss"
+
+    class Deleted(Message):
+        def __init__(self) -> None:
+            super().__init__()
 
     def __init__(self, mailbox: str = "", password: str = "", *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -24,6 +29,7 @@ class ChangeMailboxWidget(Widget):
 
     @on(Button.Pressed, ".delete-btn")
     def delete(self) -> None:
+        self.post_message(self.Deleted())
         self.remove()
 
 

@@ -1,5 +1,6 @@
 from textual import on
 from textual.containers import Horizontal, Container, Vertical, ScrollableContainer
+from textual.widget import Widget
 from textual.widgets import Button, Header, Footer, Label, Input, Static
 from textual.app import ComposeResult
 from textual.screen import Screen
@@ -12,6 +13,7 @@ class ChangePasswordScreen(Screen):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        self.empty_state = Static("No mailboxes added yet.\nPress 'Add' or 'From file' to start.", classes="empty-state")
 
     def compose(self) -> ComposeResult:
         yield Container(
@@ -21,6 +23,7 @@ class ChangePasswordScreen(Screen):
                 Button("From file", variant="default", id="file-btn"),
                 Button("Change all", variant="success", id="change-all-btn"),
                 Button("Back", variant="error", id="back-btn"),
+                id="mailbox-buttons-container",
             ),
             ScrollableContainer(
                 id="mailbox-container"
@@ -29,14 +32,30 @@ class ChangePasswordScreen(Screen):
         )
 
     def on_mount(self) -> None:
-        """При монтировании добавляем виджет с подсказкой"""
-        self._add_empty_state()
+        self._toggle_empty_state()
 
-    def _add_empty_state(self) -> None:
-        """Показывает сообщение, если нет ящиков"""
-        container = self.query_one("#mailbox-container", ScrollableContainer)
-        container.remove_children()
-        container.mount(Static("No mailboxes added yet.\nPress 'Add' or 'From file' to start.", classes="empty-state"))
+    @on(ChangeMailboxWidget.Deleted)
+    def mailbox_deleted_handle(self, event: ChangeMailboxWidget.Deleted) -> None:
+        self._toggle_empty_state()
+
+    # def _add_empty_state(self) -> None:
+    #     container = self.query_one("#mailbox-container", ScrollableContainer)
+    #     container.remove_children()
+    #     container.mount(self.empty_state)
+    #
+    # def _clear_empty_state(self) -> None:
+    #     container = self.query_one("#mailbox-container", ScrollableContainer)
+    #     if container.children and isinstance(container.children[0], Static) and container.children[0].has_class("empty-state"):
+    #         container.remove_children()
+
+    def _toggle_empty_state(self) -> None:
+        container = self.query_one("#mailbox-container")
+        if len(container.children) == 1 and container.children[0].has_class("empty-state"):
+            container.query(".empty-state").remove()
+        elif len(container.children) == 1:
+            container.mount(self.empty_state)
+
+        
 
     @on(Button.Pressed, "#back-btn")
     def nav_back(self) -> None:
@@ -44,6 +63,9 @@ class ChangePasswordScreen(Screen):
 
     @on(Button.Pressed, "#add-btn")
     def add_mailbox(self) -> None:
+        # self.query(".empty-state").remove()
+
+        self._toggle_empty_state()
         mail_container = self.query_one("#mailbox-container")
         mail_container.mount(ChangeMailboxWidget())
 

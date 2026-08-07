@@ -312,3 +312,83 @@ SyncScreen {
     width: 1fr;
     margin: 0 1;
 }
+
+
+/* ### Change Password tool ###  */
+
+.screen-title {
+    text-align: center;
+    padding: 1;
+    text-style: bold;
+    color: $primary;
+}
+
+.action-bar {
+    height: 3;
+    padding: 1;
+    align: center middle;
+}
+
+.action-bar Button {
+    margin: 0 1;
+}
+
+#mailbox-buttons-container {
+  height: auto;
+}
+
+#mailbox-container {
+    layout: grid;
+    grid-size: 1;
+    grid-rows: auto;
+    grid-gutter: 1;
+    height: 100%;
+    margin: 0;
+    border: solid $primary;
+    padding: 1;
+}
+
+.mailbox-row {
+    height: auto;
+    /* margin: 1 0; */
+    /* padding: 1; */
+    background: $surface;
+    border: solid $panel;
+}
+
+.mailbox-fields {
+    width: 80%;
+    height: auto;
+}
+
+.mailbox-input, .password-input {
+    width: 100%;
+    margin: 0;
+}
+
+.mailbox-actions {
+    width: 20%;
+    height: 100%;
+    align: center middle;
+}
+
+.mailbox-actions Button {
+    width: 100%;
+    margin: 0;
+}
+
+.delete-btn {
+    width: 100%;
+    margin: 0;
+}
+
+.change-single-btn {
+    width: 100%;
+    margin: 0;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 2;
+    color: $text-muted;
+}
