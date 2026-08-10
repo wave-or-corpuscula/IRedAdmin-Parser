@@ -10,7 +10,8 @@ from textual.widgets import Button, Label
 
 from app.backend.exceptions import BackendError
 from app.services.sync_service import SyncService
-from app.utils import _create_config_service
+from app.tui.models import BaseModalScreen
+from app.services.config_service import _create_config_service
 from app.utils.config import ServerConfig
 
 
@@ -46,9 +47,7 @@ class SyncButton(Button):
         )
 
 
-class SyncScreen(ModalScreen):
-    CSS_PATH = "../../styles.tcss"
-
+class SyncScreen(BaseModalScreen):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.config_service = _create_config_service()
@@ -83,10 +82,7 @@ class SyncScreen(ModalScreen):
     async def _sync_one(self, button: SyncButton) -> None:
         try:
             response = await self.sync_service.sync(button.server_config())
-            self.notify(
-                title="Успех!",
-                message=f"Получено {response.amount} ящиков из {response.server}",
-            )
+            self.notify_success(message=f"Получено {response.amount} ящиков из {response.server}")
 
             button.variant = "success"
             button.label = "✅"
@@ -96,11 +92,7 @@ class SyncScreen(ModalScreen):
             button.disabled = False
 
         except BackendError as e:
-            self.notify(
-                title=e.type,
-                message=e.message,
-                severity="error",
-            )
+            self.notify_backend_error(e)
             button.variant = "error"
             button.label = "❌"
             await asyncio.sleep(2)
@@ -109,11 +101,7 @@ class SyncScreen(ModalScreen):
             button.disabled = False
 
         except Exception as e:
-            self.notify(
-                title="Ошибка",
-                message=f"Неизвестная ошибка: {str(e)}",
-                severity="error",
-            )
+            self.notify_error(message=f"Неизвестная ошибка: {str(e)}")
             button.variant = "error"
             button.label = "❌"
             await asyncio.sleep(2)

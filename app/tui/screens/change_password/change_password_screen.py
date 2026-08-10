@@ -10,13 +10,13 @@ from app.database.db import transaction
 from app.database.repositories.server_repository import ServerRepository
 from app.services import password_service
 from app.services.password_service import PasswordService
+from app.tui.models import BaseScreen
 from app.tui.widgets import ChangeMailboxWidget
-from app.utils import _create_config_service
+from app.services.config_service import _create_config_service
 from app.utils.config import ServerConfig
 
 
-class ChangePasswordScreen(Screen):
-    CSS_PATH = "../../styles.tcss"
+class ChangePasswordScreen(BaseScreen):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -58,30 +58,18 @@ class ChangePasswordScreen(Screen):
     @on(ChangeMailboxWidget.MailboxChangedMessage)
     def mailbox_change_handle(self, event: ChangeMailboxWidget.MailboxChangedMessage) -> None:
         password = self._change_mailbox_password(event.mailbox, event.password)
-        event._sender.set_password(password) # do it safely
+        event._sender.set_password(password) # type: ignore
 
     def _change_mailbox_password(self, mailbox: str, password: str) -> str:
         try:
             # Выставляем в input пароль, который вернул backend
             resp = self.password_service.change_password(self.current_config, mailbox, password)
-            self.notify(
-                severity="information",
-                title="Успех!",
-                message=f"Изменен пароль на {resp.mailbox}"
-            )
+            self.notify_success(message=f"Изменен пароль на {resp.mailbox}")
             return resp.password
         except BackendError as e:
-            self.notify(
-                severity="error",
-                title=e.type,
-                message=f"[{e.code}] {e.message}",
-            )
+            self.notify_backend_error(e)
         except Exception as e:
-            self.notify(
-                severity="error",
-                title="Unknown error",
-                message=str(e),
-            )
+            self.notify_error(message=str(e))
         return ""
 
     @on(Button.Pressed, "#change-all-btn")
@@ -93,7 +81,7 @@ class ChangePasswordScreen(Screen):
                 mailbox_data.append((child.mailbox, child.password))
 
         if len(mailbox_data) == 0:
-            self.notify(title="Нет ящиков", message="Сначала добавьте ящики для изменения", severity="warning")
+            self.notify_warning(title="Нет ящиков", message="Сначала добавьте ящики для изменения")
             return
         
         for box in mailbox_data:

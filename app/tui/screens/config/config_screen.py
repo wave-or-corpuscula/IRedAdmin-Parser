@@ -6,12 +6,12 @@ from textual.widgets import Button
 
 from app.backend.exceptions import BackendError
 from app.services import ConfigService
+from app.tui.models import BaseScreen
 from app.tui.widgets import ServerConfigWidget
 from app.utils.config import ServerConfig
 
 
-class ConfigScreen(Screen):
-    CSS_PATH = "../../styles.tcss"
+class ConfigScreen(BaseScreen):
 
     def __init__(self, service: ConfigService, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -52,18 +52,10 @@ class ConfigScreen(Screen):
 
         try:
             response = await self.config_service.validate(config)
-            self.notify(
-                severity="information",
-                title="Успех!",
-                message=f"Успешная авторизация на '{response.server}'",
-            )
+            self.notify_success(message=f"Успешная авторизация на '{response.server}'")
             widget.set_validation_result(True)
         except BackendError as e:
-            self.notify(
-                severity="error",
-                title=e.type,
-                message=e.message,
-            )
+            self.notify_backend_error(e)
             widget.set_validation_result(False)
             return
         finally:
@@ -81,9 +73,7 @@ class ConfigScreen(Screen):
                 server=config.server, login=config.login, password=config.password
             ),
         )
-        self.notify(
-            title="Успех!", message=f"Конфигурация для {config.server} сохранена"
-        )
+        self.notify_success(message=f"Конфигурация для {config.server} сохранена")
 
     @on(ServerConfigWidget.DeleteRequested)
     def delete_config(self, message: ServerConfigWidget.DeleteRequested):

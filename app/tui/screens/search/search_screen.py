@@ -20,6 +20,7 @@ from textual.widgets import (
 from app.database.db import transaction
 from app.database.repositories import ServerRepository
 from app.database.repositories.mailbox_repository import MailboxRepository
+from app.tui.models import BaseScreen
 from app.tui.screens.sync.sync_screen import SyncScreen
 
 COLUMNS = [
@@ -84,10 +85,9 @@ def validate_quota(func):
         if len(value) == 0 or (value.isdigit() and int(value) >= 0):
             func(self, event, *args, **kwargs)
         else:
-            self.notify(
+            self.notify_error(
                 title="Неверная квота",
                 message="Квота должна быть положительным числом",
-                severity="error",
             )
             event._sender.clear()  # type: ignore
             return
@@ -95,9 +95,7 @@ def validate_quota(func):
     return wrapper
 
 
-class SearchScreen(Screen):
-    CSS_PATH = "../../styles.tcss"
-
+class SearchScreen(BaseScreen):
     filters = reactive(DataFilter())
 
     sort_column = reactive("address")
@@ -176,7 +174,7 @@ class SearchScreen(Screen):
     @on(DataTable.RowSelected)
     def handle_select_row(self, event: DataTable.RowSelected) -> None:
         row_data = event.data_table.get_row(event.row_key)
-        self.notify(title="RowSelected", message=str(row_data))
+        self.notify_success(title="RowSelected", message=str(row_data))
 
     @on(DataTable.HeaderSelected)
     def handle_highlight_column(self, event: DataTable.HeaderSelected) -> None:

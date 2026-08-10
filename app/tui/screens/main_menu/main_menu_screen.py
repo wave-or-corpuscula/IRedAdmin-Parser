@@ -3,7 +3,8 @@ from textual.app import App, ComposeResult
 from textual.widgets import Button
 from textual.containers import Vertical
 
-from app.utils import _create_config_service
+from app.tui.models import BaseScreen
+from app.services.config_service import _create_config_service
 from app.database.db import transaction_factory
 from app.services.config_service import ConfigService
 from app.storage.config_storage import ConfigStorage
@@ -12,8 +13,10 @@ from app.tui.screens.search.search_screen import SearchScreen
 from app.tui.screens.change_password import ChangePasswordScreen
 
 
-class MainMenuScreen(App):
-    CSS_PATH = "../../styles.tcss"
+class MainMenuScreen(BaseScreen):
+    
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
 
     def compose(self) -> ComposeResult:
         with Vertical(id="main-menu-container"):
@@ -25,24 +28,19 @@ class MainMenuScreen(App):
     @on(Button.Pressed, "#search-button")
     def nav_search_screen(self) -> None:
         search_screen = SearchScreen()
-        self.push_screen(search_screen)
+        self.app.push_screen(search_screen)
 
     @on(Button.Pressed, "#tools_button")
     def nav_tools_screen(self) -> None:
         passwords_change_screen = ChangePasswordScreen()
-        self.push_screen(passwords_change_screen)
+        self.app.push_screen(passwords_change_screen)
 
     @on(Button.Pressed, "#config-button")
     def nav_config_screen(self) -> None:
         conf_service = _create_config_service()
         conf_screen = ConfigScreen(conf_service)
-        self.push_screen(conf_screen)
+        self.app.push_screen(conf_screen)
 
     @on(Button.Pressed, "#exit-button")
     def quit_app(self) -> None:
-        self.exit()
-
-
-if __name__ == "__main__":
-    app = MainMenuScreen()
-    app.run()
+        self.app.exit()
