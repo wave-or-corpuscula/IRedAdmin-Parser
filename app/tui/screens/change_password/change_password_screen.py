@@ -1,11 +1,18 @@
 from textual import on
-from textual.containers import Horizontal, Container, Vertical, ScrollableContainer
-from textual.widget import Widget
-from textual.widgets import Button, Header, Footer, Label, Input, Static
 from textual.app import ComposeResult
+from textual.containers import Container, Horizontal, ScrollableContainer, Vertical
 from textual.screen import Screen
+from textual.widget import Widget
+from textual.widgets import Button, Footer, Header, Input, Label, Select, Static
 
+from app.backend.exceptions import BackendError
+from app.database.db import transaction
+from app.database.repositories.server_repository import ServerRepository
+from app.services import password_service
+from app.services.password_service import PasswordService
 from app.tui.widgets import ChangeMailboxWidget
+from app.utils import _create_config_service
+from app.utils.config import ServerConfig
 
 
 class ChangePasswordScreen(Screen):
@@ -14,15 +21,25 @@ class ChangePasswordScreen(Screen):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.empty_state = Static("No mailboxes added yet.\nPress 'Add' or 'From file' to start.", classes="empty-state")
+        self.password_service = PasswordService()
+
+        self.config_service = _create_config_service()
+        self.servers = self.config_service.get_all()
+        self.current_config = self.servers[0]
 
     def compose(self) -> ComposeResult:
         yield Container(
             Static("Изменение паролей", classes="screen-title"),
             Horizontal(
-                Button("Add", variant="primary", id="add-btn"),
-                Button("From file", variant="default", id="file-btn"),
-                Button("Change all", variant="success", id="change-all-btn"),
-                Button("Back", variant="error", id="back-btn"),
+                Button("Добавить", variant="primary", id="add-btn"),
+                Button("Из файла", variant="default", id="file-btn"),
+                Button("Изменить все", variant="success", id="change-all-btn"),
+                Select(
+                    [(s.server, i) for  i, s in enumerate(self.servers)],
+                    allow_blank=False,
+                    id="server-select",
+                ),
+                Button("Назад", variant="error", id="back-btn"),
                 id="mailbox-buttons-container",
             ),
             ScrollableContainer(
@@ -34,9 +51,53 @@ class ChangePasswordScreen(Screen):
     def on_mount(self) -> None:
         self._add_empty_state()
 
-    @on(ChangeMailboxWidget.Deleted)
-    def mailbox_deleted_handle(self, _: ChangeMailboxWidget.Deleted) -> None:
+    @on(ChangeMailboxWidget.DeleteMessage)
+    def mailbox_deleted_handle(self, _: ChangeMailboxWidget.DeleteMessage) -> None:
         self._add_empty_state()
+
+    @on(ChangeMailboxWidget.MailboxChangedMessage)
+    def mailbox_change_handle(self, event: ChangeMailboxWidget.MailboxChangedMessage) -> None:
+        password = self._change_mailbox_password(event.mailbox, event.password)
+        event._sender.set_password(password) # do it safely
+
+    def _change_mailbox_password(self, mailbox: str, password: str) -> str:
+        try:
+            # Выставляем в input пароль, который вернул backend
+            resp = self.password_service.change_password(self.current_config, mailbox, password)
+            self.notify(
+                severity="information",
+                title="Успех!",
+                message=f"Изменен пароль на {resp.mailbox}"
+            )
+            return resp.password
+        except BackendError as e:
+            self.notify(
+                severity="error",
+                title=e.type,
+                message=f"[{e.code}] {e.message}",
+            )
+        except Exception as e:
+            self.notify(
+                severity="error",
+                title="Unknown error",
+                message=str(e),
+            )
+        return ""
+
+    @on(Button.Pressed, "#change-all-btn")
+    def change_all_mailboxes(self, _: Button.Pressed):
+        mailbox_data = []
+
+        for child in self.mailbox_container.children:
+            if isinstance(child, ChangeMailboxWidget):
+                mailbox_data.append((child.mailbox, child.password))
+
+        if len(mailbox_data) == 0:
+            self.notify(title="Нет ящиков", message="Сначала добавьте ящики для изменения", severity="warning")
+            return
+        
+        for box in mailbox_data:
+            self._change_mailbox_password(*box)
 
     @on(Button.Pressed, "#add-btn")
     def add_mailbox(self) -> None:
@@ -44,10 +105,20 @@ class ChangePasswordScreen(Screen):
         mail_container = self.query_one("#mailbox-container")
         mail_container.mount(ChangeMailboxWidget())
 
+    @on(Button.Pressed, "#back-btn")
+    def nav_back(self) -> None:
+        self.dismiss()
+
+    @on(Select.Changed, "#server-select")
+    def set_current_config(self, event: Select.Changed) -> None:
+        self.current_config = self.servers[event.value] # type: ignore
+
+    @property
+    def mailbox_container(self) -> ScrollableContainer:
+        return self.query_one("#mailbox-container", ScrollableContainer)
+
     def _add_empty_state(self) -> None:
-        container = self.query_one("#mailbox-container", ScrollableContainer)
+        container = self.mailbox_container
         if len(container.children) == 0 or len(container.children) == 1 and isinstance(container.children[0], ChangeMailboxWidget):
             container.mount(self.empty_state)
 
-    def nav_back(self) -> None:
-        self.dismiss()
