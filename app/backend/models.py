@@ -18,11 +18,11 @@ class CLIResponse:
     def from_dict(cls, d: dict) -> "CLIResponse":
         error = None
 
-        if d.get("error"):
+        if err := d.get("error"):
             error = CLIError(
-                code=d["error"]["code"],
-                type=d["error"]["type"],
-                message=d["error"]["message"],
+                code=err["code"],
+                type=err["type"],
+                message=err["message"],
             )
         return cls(
             success=d["success"],
