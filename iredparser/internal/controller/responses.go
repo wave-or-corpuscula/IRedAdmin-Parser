@@ -32,6 +32,7 @@ func (c *CLIController) SendError(errType string, code int, err error) {
 		Success: false,
 		Error: &ErrorResponse{
 			Code:    code,
+			Type:    errType,
 			Message: err.Error(),
 		},
 	}
