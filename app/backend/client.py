@@ -19,7 +19,7 @@ class IRedParserClient:
             "--config", config.to_json(),
         )
 
-        return AuthResponse.from_response(resp)
+        return AuthResponse.from_cli(resp)
 
     def sync_mailboxes(self, config: ServerConfig) -> SyncResponse:
         resp = self._run(
@@ -27,7 +27,7 @@ class IRedParserClient:
             "--config", config.to_json(),
         )
 
-        return SyncResponse.from_response(resp)
+        return SyncResponse.from_cli(resp)
 
     def change_password(self, config: ServerConfig, mailbox: str, password: str = ""):
         resp = self._run(
@@ -37,7 +37,7 @@ class IRedParserClient:
             "-p", password
         )
 
-        return PasswordResponse.from_response(resp)
+        return PasswordResponse.from_cli(resp)
 
     def _run(self, *args, stdin_data: Optional[str] = None) -> CLIResponse:
         process = subprocess.run(
@@ -47,7 +47,7 @@ class IRedParserClient:
             text=True,
         )
 
-        response = CLIResponse.from_dict(
+        response = CLIResponse.model_validate(
             json.loads(process.stdout),
         )
 

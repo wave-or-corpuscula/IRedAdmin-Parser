@@ -1,72 +1,43 @@
-from dataclasses import dataclass
+from typing import Any, Dict, Optional
+from pydantic import BaseModel
 
 
-@dataclass
-class CLIError:
+class CLIError(BaseModel):
     code: int
     message: str
     type: str
 
 
-@dataclass
-class CLIResponse:
+class CLIResponse(BaseModel):
     success: bool
-    data: dict | None
-    error: CLIError | None
-
-    @classmethod
-    def from_dict(cls, d: dict) -> "CLIResponse":
-        error = None
-
-        if err := d.get("error"):
-            error = CLIError(
-                code=err["code"],
-                type=err["type"],
-                message=err["message"],
-            )
-        return cls(
-            success=d["success"],
-            data=d["data"],
-            error=error,
-        )
+    data: Optional[Dict[str, Any]]
+    error: Optional[CLIError]
 
 
-@dataclass
-class AuthResponse:
+class AuthResponse(BaseModel):
     authenticated: bool
     server: str
     cookie_string: str
 
     @classmethod
-    def from_response(cls, resp: CLIResponse) -> "AuthResponse":
-        return cls(
-            authenticated=resp.data["authenticated"],  # type: ignore
-            server=resp.data["server"],  # type: ignore
-            cookie_string=resp.data["cookie_string"], # type: ignore
-        )
+    def from_cli(cls, resp: CLIResponse) -> "AuthResponse":
+        return cls.model_validate(resp.data)
 
 
-@dataclass
-class SyncResponse:
+class SyncResponse(BaseModel):
     server: str
     amount: int
 
     @classmethod
-    def from_response(cls, resp: CLIResponse) -> "SyncResponse":
-        return cls(
-            server=resp.data["server"],  # type: ignore
-            amount=resp.data["amount"],  # type: ignore
-        )
+    def from_cli(cls, resp: CLIResponse) -> "SyncResponse":
+        return cls.model_validate(resp.data)
 
-@dataclass
-class PasswordResponse:
+
+class PasswordResponse(BaseModel):
     mailbox: str
     password: str
 
     @classmethod
-    def from_response(cls, resp: CLIResponse) -> "PasswordResponse":
-        return cls(
-            mailbox=resp.data["mailbox"],   # type: ignore
-            password=resp.data["password"]  # type: ignore
-        )
+    def from_cli(cls, resp: CLIResponse) -> "PasswordResponse":
+        return cls.model_validate(resp.data)
 
