@@ -10,14 +10,13 @@ from textual.widgets import Button, Label
 
 from app.backend.exceptions import BackendError
 from app.services.sync_service import SyncService
-from app.storage.config_storage import Credentials
 from app.utils import _create_config_service
 from app.utils.config import ServerConfig
 
 
 class SyncButton(Button):
     class Synced(Message):
-        def __init__(self, creds: Credentials):
+        def __init__(self, creds: ServerConfig):
             super().__init__()
             self.creds = creds
 
@@ -28,7 +27,7 @@ class SyncButton(Button):
                 password=self.creds.password,
             )
 
-    def __init__(self, label: str, creds: Credentials, **kwargs):
+    def __init__(self, label: str, creds: ServerConfig, **kwargs):
         super().__init__(label, **kwargs)
         self.creds = creds
 
@@ -98,7 +97,7 @@ class SyncScreen(ModalScreen):
 
         except BackendError as e:
             self.notify(
-                title=e.code,
+                title=e.type,
                 message=e.message,
                 severity="error",
             )
