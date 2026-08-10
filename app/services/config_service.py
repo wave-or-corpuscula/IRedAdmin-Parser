@@ -4,7 +4,7 @@ from typing import Callable, List
 from app.backend import IRedParserClient
 from app.backend.models import AuthResponse
 from app.database.repositories import ServerRepository
-from app.storage import ConfigStorage, Credentials
+from app.storage import ConfigStorage
 from app.utils import ServerConfig
 
 
@@ -14,14 +14,14 @@ class ConfigService:
         self.transaction = transaction
         self.client = IRedParserClient()
 
-    def save_config(self, creds: Credentials) -> int:
+    def save_config(self, creds: ServerConfig) -> int:
         with self.transaction() as conn:
             repo = ServerRepository(conn)
             config_id = repo.save(creds.server)
         self.storage.save(creds)
         return config_id
 
-    def get_all(self) -> List[Credentials]:
+    def get_all(self) -> List[ServerConfig]:
         return self.storage.get_all()
 
     def delete(self, server: str):
