@@ -6,7 +6,6 @@ from textual.widgets import Button
 
 from app.backend.exceptions import BackendError
 from app.services import ConfigService
-from app.storage import Credentials
 from app.tui.widgets import ServerConfigWidget
 from app.utils.config import ServerConfig
 
@@ -62,7 +61,7 @@ class ConfigScreen(Screen):
         except BackendError as e:
             self.notify(
                 severity="error",
-                title=e.code,
+                title=e.type,
                 message=e.message,
             )
             widget.set_validation_result(False)
@@ -78,7 +77,7 @@ class ConfigScreen(Screen):
     def save_config(self, message: ServerConfigWidget.SaveRequested):
         config = message.config
         self.config_service.save_config(
-            Credentials(
+            ServerConfig(
                 server=config.server, login=config.login, password=config.password
             ),
         )
