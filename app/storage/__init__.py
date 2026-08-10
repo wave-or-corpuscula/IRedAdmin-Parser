@@ -1,3 +1,3 @@
-from .config_storage import ConfigStorage, Credentials
+from .config_storage import ConfigStorage
 
-__all__ = [ConfigStorage, Credentials]
+__all__ = [ConfigStorage]

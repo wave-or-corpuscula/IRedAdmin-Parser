@@ -2,23 +2,14 @@ import json
 from dataclasses import dataclass, asdict
 from typing import Dict, List
 
-
-@dataclass
-class Credentials:
-    server: str
-    login: str
-    password: str
-
-    @classmethod
-    def from_dict(cls, data: dict) -> "Credentials":
-        return cls(**data)
+from app.utils import ServerConfig
 
 
 class ConfigStorage:
     def __init__(self, path: str):
         self.path = path
 
-    def save(self, creds: Credentials):
+    def save(self, creds: ServerConfig):
         if self.get(creds.server) is not None:
             return
 
@@ -38,21 +29,21 @@ class ConfigStorage:
 
         self._write(storage)
 
-    def get(self, key: str) -> Credentials | None:
+    def get(self, key: str) -> ServerConfig | None:
         storage = self._load()
 
         for i in range(len(storage)):
             if storage[i].get("server") == key:
-                return Credentials.from_dict(storage[i])
+                return ServerConfig.from_dict(storage[i])
 
-    def get_all(self) -> List[Credentials]:
+    def get_all(self) -> List[ServerConfig]:
         storage = self._load()
         if len(storage) == 0:
             return []
 
         creds = []
         for data in storage:
-            creds.append(Credentials.from_dict(data))
+            creds.append(ServerConfig.from_dict(data))
 
         return creds
 
