@@ -3,10 +3,12 @@ from typing import Callable, List
 
 from app.backend import IRedParserClient
 from app.backend.models import AuthResponse
+from app.database.db import transaction_factory
 from app.database.repositories import ServerRepository
 from app.storage import ConfigStorage
 from app.utils import ServerConfig
 
+CONFIG_PATH = ".iredcreds.json"
 
 class ConfigService:
     def __init__(self, storage: ConfigStorage, transaction: Callable):
@@ -34,3 +36,8 @@ class ConfigService:
         loop = asyncio.get_event_loop()
         response = await loop.run_in_executor(None, self.client.auth_check, config)
         return response
+
+
+def _create_config_service() -> ConfigService:
+    storage = ConfigStorage(CONFIG_PATH)
+    return ConfigService(storage, transaction_factory())
