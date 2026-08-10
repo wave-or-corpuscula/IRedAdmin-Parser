@@ -3,8 +3,9 @@ from dataclasses import dataclass
 
 @dataclass
 class CLIError:
-    code: str
+    code: int
     message: str
+    type: str
 
 
 @dataclass
@@ -20,6 +21,7 @@ class CLIResponse:
         if d.get("error"):
             error = CLIError(
                 code=d["error"]["code"],
+                type=d["error"]["type"],
                 message=d["error"]["message"],
             )
         return cls(
