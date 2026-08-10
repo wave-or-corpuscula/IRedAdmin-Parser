@@ -1,7 +1,8 @@
 import pytest
 from pathlib import Path
 
-from app.storage import ConfigStorage, Credentials
+from app.storage import ConfigStorage
+from app.utils import ServerConfig
 
 N = 10 # Number of test credentials created
 test_storage_path = "app/tests/.iredcreds.test.json"
@@ -18,8 +19,8 @@ def test_storage() -> ConfigStorage:
 
 
 def server_creds_factory():
-    def get_serv_cred(num: int) -> Credentials:
-        return Credentials.from_dict(
+    def get_serv_cred(num: int) -> ServerConfig:
+        return ServerConfig.from_dict(
             {
                 "server": f"server{num}",
                 "login": f"user{num}@mail.by",

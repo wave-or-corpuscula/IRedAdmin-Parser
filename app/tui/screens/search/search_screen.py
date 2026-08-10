@@ -109,7 +109,7 @@ class SearchScreen(Screen):
         with transaction() as conn:
             repo = ServerRepository(conn)
             self.servers = [("Все", None)] + repo.get_tuples()
-        
+
         self.selected_rows_lb = Label(id="selected-rows-count")
 
     def compose(self) -> ComposeResult:

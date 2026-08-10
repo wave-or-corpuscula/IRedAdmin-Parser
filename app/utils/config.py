@@ -2,10 +2,6 @@ from dataclasses import dataclass, asdict
 import json
 
 
-class Config:
-    pass
-
-
 @dataclass
 class ServerConfig:
     server: str = ""
