@@ -1,19 +1,16 @@
+from typing import List, Tuple
 from textual import on
 from textual.app import ComposeResult
-from textual.containers import Container, Horizontal, ScrollableContainer, Vertical
-from textual.screen import Screen
-from textual.widget import Widget
+from textual.containers import Container, Horizontal, ScrollableContainer
 from textual.widgets import Button, Footer, Header, Input, Label, Select, Static
+from textual_fspicker import FileOpen
 
 from app.backend.exceptions import BackendError
-from app.database.db import transaction
-from app.database.repositories.server_repository import ServerRepository
-from app.services import password_service
 from app.services.password_service import PasswordService
+from app.services import MailboxFileParsingService
 from app.tui.models import BaseScreen
 from app.tui.widgets import ChangeMailboxWidget
 from app.services.config_service import _create_config_service
-from app.utils.config import ServerConfig
 
 
 class ChangePasswordScreen(BaseScreen):
@@ -32,7 +29,7 @@ class ChangePasswordScreen(BaseScreen):
             Static("Изменение паролей", classes="screen-title"),
             Horizontal(
                 Button("Добавить", variant="primary", id="add-btn"),
-                Button("Из файла", variant="default", id="file-btn"),
+                Button("Из файла", variant="default", id="from-file-btn"),
                 Button("Изменить все", variant="success", id="change-all-btn"),
                 Select(
                     [(s.server, i) for  i, s in enumerate(self.servers)],
@@ -83,15 +80,40 @@ class ChangePasswordScreen(BaseScreen):
         if len(mailbox_data) == 0:
             self.notify_warning(title="Нет ящиков", message="Сначала добавьте ящики для изменения")
             return
-        
+
         for box in mailbox_data:
             self._change_mailbox_password(*box)
+
+
+    @on(Button.Pressed, "#from-file-btn")
+    async def pick_file(self, _: Button.Pressed) -> None:
+        self.run_worker(self._pick_file_worker(), exclusive=True)
+
+    async def _pick_file_worker(self) -> None:
+        mailboxes_path = await self.app.push_screen_wait(FileOpen())
+        if mailboxes_path is None:
+            self.notify_warning(message="Файл не был выбран")
+            return
+
+        boxes = MailboxFileParsingService.parse(str(mailboxes_path))
+        self._add_mailbox_many(boxes)
+
+        self.notify_success(message=f"Добавлено {len(boxes)} ящиков")
+
+
+    def _add_mailbox_many(self, mailboxes: List[Tuple[str, str]]) -> None:
+        self.query(".empty-state").remove()
+        for box, passwd in mailboxes:
+            self._add_mailbox(box, passwd)
 
     @on(Button.Pressed, "#add-btn")
     def add_mailbox(self) -> None:
         self.query(".empty-state").remove()
+        self._add_mailbox()
+
+    def _add_mailbox(self, mailbox: str = "", password: str = "") -> None:
         mail_container = self.query_one("#mailbox-container")
-        mail_container.mount(ChangeMailboxWidget())
+        mail_container.mount(ChangeMailboxWidget(mailbox, password))
 
     @on(Button.Pressed, "#back-btn")
     def nav_back(self) -> None:
