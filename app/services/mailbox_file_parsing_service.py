@@ -34,7 +34,7 @@ class MailboxFileParsingService:
                     mailbox = line.strip()
                     
                     if cls._validate_email(mailbox):
-                        mailboxes.append(mailbox)
+                        mailboxes.append((mailbox, ''))
                     else:
                         raise ValueError(
                             f"Line {line_number}: invalid mailbox format: '{line}'"
