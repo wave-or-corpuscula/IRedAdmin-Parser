@@ -1,6 +1,7 @@
 from textual import on
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
+from textual.events import Event
 from textual.message import Message
 from textual.widget import Widget
 from textual.widgets import Button, Input
@@ -9,26 +10,41 @@ from app.utils.config import ServerConfig
 
 
 class ServerConfigWidget(Widget):
-    class ValidateRequested(Message):
+    class ValidateRequested(Event):
         config: ServerConfig
 
-        def __init__(self, config: ServerConfig):
+        def __init__(self, sender: "ServerConfigWidget", config: ServerConfig):
             super().__init__()
+            self.sender = sender
             self.config = config
+
+        @property
+        def control(self) -> "ServerConfigWidget":
+            return self.sender
 
     class SaveRequested(Message):
         config: ServerConfig
 
-        def __init__(self, config: ServerConfig):
+        def __init__(self, sender: "ServerConfigWidget",config: ServerConfig):
             super().__init__()
+            self.sender = sender
             self.config = config
+
+        @property
+        def control(self) -> "ServerConfigWidget":
+            return self.sender
 
     class DeleteRequested(Message):
         server: str
 
-        def __init__(self, server: str):
+        def __init__(self, sender: "ServerConfigWidget",server: str):
             super().__init__()
+            self.sender = sender
             self.server = server
+
+        @property
+        def control(self) -> "ServerConfigWidget":
+            return self.sender
 
     def compose(self) -> ComposeResult:
         with Vertical(classes="server-config-container"):
@@ -90,7 +106,7 @@ class ServerConfigWidget(Widget):
 
     @on(Button.Pressed, ".remove-button")
     def remove_widget(self) -> None:
-        self.post_message(self.DeleteRequested(server=self.server))
+        self.post_message(self.DeleteRequested(self, server=self.server))
         self.remove()
 
     @on(Button.Pressed, ".test-button")
@@ -100,13 +116,13 @@ class ServerConfigWidget(Widget):
 
         self.post_message(
             self.ValidateRequested(
-                config=self.get_config(),
+                self, config=self.get_config(),
             )
         )
 
     @on(Button.Pressed, ".save-button")
     def save_config(self):
-        self.post_message(self.SaveRequested(config=self.get_config()))
+        self.post_message(self.SaveRequested(self, config=self.get_config()))
 
     @on(Input.Changed)
     def reset_validation(self):

@@ -44,10 +44,7 @@ class ConfigScreen(BaseScreen):
         self, message: ServerConfigWidget.ValidateRequested
     ) -> None:
 
-        if message._sender is None:
-            return
-
-        widget: ServerConfigWidget = message._sender  # type: ignore
+        widget = message.control
         config: ServerConfig = message.config
 
         try:
