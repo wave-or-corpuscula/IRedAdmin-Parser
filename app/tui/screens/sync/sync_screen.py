@@ -17,9 +17,14 @@ from app.utils.config import ServerConfig
 
 class SyncButton(Button):
     class Synced(Message):
-        def __init__(self, creds: ServerConfig):
+        def __init__(self, sender: "SyncButton", creds: ServerConfig):
             super().__init__()
             self.creds = creds
+            self.sender = sender
+
+        @property
+        def control(self) -> "SyncButton":
+            return self.sender
 
         def as_server_config(self) -> ServerConfig:
             return ServerConfig(
@@ -36,7 +41,7 @@ class SyncButton(Button):
         self.disabled = True
         self.label = "⚠️"
         self.variant = "warning"
-        self.post_message(self.Synced(creds=self.creds))
+        self.post_message(self.Synced(self, creds=self.creds))
         return super()._on_click(event)
 
     def server_config(self) -> ServerConfig:
@@ -69,7 +74,7 @@ class SyncScreen(BaseModalScreen):
 
     @on(SyncButton.Synced)
     def sync_signal(self, message: SyncButton.Synced) -> None:
-        self._sync_one_work(message._sender)  # type: ignore
+        self._sync_one_work(message.control)
 
     @on(Button.Pressed, "#nav-back")
     def nav_back(self) -> None:
