@@ -330,7 +330,7 @@ SyncScreen {
 }
 
 .action-bar Button {
-    margin: 0 1;
+    margin: 1;
 }
 
 #mailbox-buttons-container {
@@ -345,15 +345,21 @@ SyncScreen {
     height: 1fr;
     margin: 0;
     border: solid $primary;
-    padding: 1;
+    padding: 0 1;
 }
 
 .mailbox-row {
     height: auto;
-    /* margin: 1 0; */
-    /* padding: 1; */
     background: $surface;
     border: solid $panel;
+}
+
+.mailbox-success {
+    background: green 50%;
+}
+
+.mailbox-error {
+    background: red 50%;
 }
 
 .mailbox-fields {
