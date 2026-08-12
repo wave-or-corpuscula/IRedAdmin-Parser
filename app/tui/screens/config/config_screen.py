@@ -74,9 +74,6 @@ class ConfigScreen(BaseScreen):
 
     @on(ServerConfigWidget.DeleteRequested)
     def delete_config(self, message: ServerConfigWidget.DeleteRequested):
-        if message._sender is None:
-            return
-
         server = message.server
         self.config_service.delete(server)
 
