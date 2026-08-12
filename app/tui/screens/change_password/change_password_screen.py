@@ -1,3 +1,4 @@
+import asyncio
 from typing import List, Tuple
 from textual import on
 from textual.app import ComposeResult
@@ -53,37 +54,55 @@ class ChangePasswordScreen(BaseScreen):
         self._add_empty_state()
 
     @on(ChangeMailboxWidget.MailboxChangedMessage)
-    def mailbox_change_handle(self, event: ChangeMailboxWidget.MailboxChangedMessage) -> None:
-        password = self._change_mailbox_password(event.mailbox, event.password)
-        event._sender.set_password(password) # type: ignore
-
-    def _change_mailbox_password(self, mailbox: str, password: str) -> str:
-        try:
-            # Выставляем в input пароль, который вернул backend
-            resp = self.password_service.change_password(self.current_config, mailbox, password)
-            self.notify_success(message=f"Изменен пароль на {resp.mailbox}")
-            return resp.password
-        except BackendError as e:
-            self.notify_backend_error(e)
-        except Exception as e:
-            self.notify_error(message=str(e))
-        return ""
+    async def mailbox_change_handle(self, event: ChangeMailboxWidget.MailboxChangedMessage) -> None:
+        self.run_worker(
+            self._change_password_worker(event.control),
+            exclusive=True,
+            exit_on_error=False,
+        )
 
     @on(Button.Pressed, "#change-all-btn")
-    def change_all_mailboxes(self, _: Button.Pressed):
-        mailbox_data = []
+    async def change_all_mailboxes(self, _: Button.Pressed):
+        self.run_worker(self._change_all_passwords_worder(), exclusive=True)
 
-        for child in self.mailbox_container.children:
-            if isinstance(child, ChangeMailboxWidget):
-                mailbox_data.append((child.mailbox, child.password))
+    async def _change_all_passwords_worder(self) -> None:
+        for widget in self.mailbox_container.children:
+            if isinstance(widget, ChangeMailboxWidget):
+                await self._change_password_worker(widget)
 
-        if len(mailbox_data) == 0:
-            self.notify_warning(title="Нет ящиков", message="Сначала добавьте ящики для изменения")
-            return
+    async def _change_password_worker(self, widget: ChangeMailboxWidget) -> None:
+        widget.set_disable()
+        try:
+            loop = asyncio.get_event_loop()
+            resp = await loop.run_in_executor(
+                None,
+                self.password_service.change_password,
+                self.current_config,
+                widget.mailbox,
+                widget.password,
+            )
+            self.notify_success(message=f"Изменен пароль на {resp.mailbox}")
 
-        for box in mailbox_data:
-            self._change_mailbox_password(*box)
+            widget.enable_success()
 
+            widget.set_password(resp.password)
+        except BackendError as e:
+            self.notify_backend_error(e)
+            widget.enable_error()
+        except Exception as e:
+            self.notify_error(message=str(e))
+            widget.enable_error()
+
+        widget.refresh()
+
+    @on(Button.Pressed, "#add-btn")
+    def add_mailbox(self) -> None:
+        self.query(".empty-state").remove()
+        self._add_mailbox()
+
+    def _add_mailbox(self, mailbox: str = "", password: str = "") -> None:
+        mail_container = self.query_one("#mailbox-container")
+        mail_container.mount(ChangeMailboxWidget(mailbox, password))
 
     @on(Button.Pressed, "#from-file-btn")
     async def pick_file(self, _: Button.Pressed) -> None:
@@ -95,25 +114,19 @@ class ChangePasswordScreen(BaseScreen):
             self.notify_warning(message="Файл не был выбран")
             return
 
-        boxes = MailboxFileParsingService.parse(str(mailboxes_path))
-        self._add_mailbox_many(boxes)
+        try: 
+            boxes = MailboxFileParsingService.parse(str(mailboxes_path))
 
-        self.notify_success(message=f"Добавлено {len(boxes)} ящиков")
+            self._add_mailbox_many(boxes)
+            self.notify_success(message=f"Добавлено {len(boxes)} ящиков")
+        except Exception as e:
+            self.notify_error(message=str(e))
 
 
     def _add_mailbox_many(self, mailboxes: List[Tuple[str, str]]) -> None:
         self.query(".empty-state").remove()
         for box, passwd in mailboxes:
             self._add_mailbox(box, passwd)
-
-    @on(Button.Pressed, "#add-btn")
-    def add_mailbox(self) -> None:
-        self.query(".empty-state").remove()
-        self._add_mailbox()
-
-    def _add_mailbox(self, mailbox: str = "", password: str = "") -> None:
-        mail_container = self.query_one("#mailbox-container")
-        mail_container.mount(ChangeMailboxWidget(mailbox, password))
 
     @on(Button.Pressed, "#back-btn")
     def nav_back(self) -> None:
