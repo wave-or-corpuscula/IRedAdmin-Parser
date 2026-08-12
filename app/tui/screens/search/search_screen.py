@@ -89,7 +89,7 @@ def validate_quota(func):
                 title="Неверная квота",
                 message="Квота должна быть положительным числом",
             )
-            event._sender.clear()  # type: ignore
+            event.control.clear()
             return
 
     return wrapper
