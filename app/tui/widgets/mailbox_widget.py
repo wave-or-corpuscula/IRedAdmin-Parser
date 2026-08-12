@@ -16,16 +16,25 @@ class ChangeMailboxWidget(Widget):
         mailbox : str
         password: str
 
-        def __init__(self, mailbox: str, password: str) -> None:
+        def __init__(self, sender: "ChangeMailboxWidget", mailbox: str, password: str) -> None:
             super().__init__()
+            self.sender = sender
             self.mailbox = mailbox
             self.password = password
+
+        @property
+        def control(self) -> "ChangeMailboxWidget":
+            return self.sender
 
 
     def __init__(self, mailbox: str = "", password: str = "", *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.mailbox_input = Input(placeholder="mailbox@domain.com", value=mailbox, classes="mailbox-input")
         self.password_input = Input(placeholder="Новый пароль", value=password, classes="password-input", password=True)
+
+        self.change_button = Button("Change", variant="primary", classes="change-single-btn", id="change-single-btn")
+        self.delete_button = Button("x", variant="error", classes="delete-btn", id="delete-btn")
+
 
 
     def compose(self) -> ComposeResult:
@@ -34,8 +43,32 @@ class ChangeMailboxWidget(Widget):
                 yield self.mailbox_input
                 yield self.password_input
             with Vertical(classes="mailbox-actions"):
-                yield Button("Change", variant="primary", classes="change-single-btn")
-                yield Button("x", variant="error", classes="delete-btn")
+                yield self.change_button
+                yield self.delete_button
+
+    def set_disable(self) -> None:
+        self._set_locked(True)
+
+    def set_enable(self) -> None:
+        self._set_locked(False)
+
+    def _set_locked(self, locked: bool) -> None:
+        self.mailbox_input.disabled = locked
+        self.password_input.disabled = locked
+        self.change_button.disabled = locked
+        self.delete_button.disabled = locked
+
+    def enable_success(self) -> None:
+        row = self.query_one(".mailbox-row")
+        row.remove_class("mailbox-error")
+        row.add_class("mailbox-success")
+        self.set_enable()
+
+    def enable_error(self) -> None:
+        row = self.query_one(".mailbox-row")
+        row.remove_class("mailbox-success")
+        row.add_class("mailbox-error")
+        self.set_enable()
 
     @property
     def password(self) -> str:
@@ -59,6 +92,7 @@ class ChangeMailboxWidget(Widget):
     @on(Button.Pressed, ".change-single-btn")
     def change(self) -> None:
         self.post_message(self.MailboxChangedMessage(
+            self,
             mailbox=self.mailbox,
             password=self.password,
         ))
