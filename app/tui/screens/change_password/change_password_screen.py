@@ -62,27 +62,31 @@ class ChangePasswordScreen(BaseScreen):
         )
 
     def _lock_ui(self) -> None:
+        self.query_one("#change-all-btn").disabled = True
         for widget in self.mailbox_container.children:
             if isinstance(widget, ChangeMailboxWidget):
                 widget.set_disable()
 
     def _unlock_ui(self) -> None:
+        self.query_one("#change-all-btn").disabled = False
         for widget in self.mailbox_container.children:
             if isinstance(widget, ChangeMailboxWidget):
                 widget.set_enable()
 
     @on(Button.Pressed, "#change-all-btn")
     async def change_all_mailboxes(self, _: Button.Pressed):
+        if len(self.mailbox_container.children) == 1 and isinstance(self.mailbox_container.children[0], Static):
+            self.notify_warning(message="Не добавлено ящиков для изменения")
+            return
         self.run_worker(self._change_all_passwords_worder(), exclusive=True)
 
     async def _change_all_passwords_worder(self) -> None:
-        self._lock_ui()
         for widget in self.mailbox_container.children:
             if isinstance(widget, ChangeMailboxWidget):
                 await self._change_password_worker(widget)
-        self._unlock_ui()
 
     async def _change_password_worker(self, widget: ChangeMailboxWidget) -> None:
+        self._lock_ui()
         try:
             loop = asyncio.get_event_loop()
             resp = await loop.run_in_executor(
@@ -104,7 +108,7 @@ class ChangePasswordScreen(BaseScreen):
             self.notify_error(message=str(e))
             widget.enable_error()
         finally:
-            widget.refresh()
+            self._unlock_ui()
 
 
     @on(Button.Pressed, "#add-btn")
