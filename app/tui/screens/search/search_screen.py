@@ -6,7 +6,6 @@ from textual import on
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.reactive import reactive
-from textual.screen import Screen
 from textual.widgets import (
     Button,
     DataTable,
@@ -111,7 +110,7 @@ class SearchScreen(BaseScreen):
         self.selected_rows_lb = Label(id="selected-rows-count")
 
     def compose(self) -> ComposeResult:
-        yield Header(show_clock=True)
+        yield Header(show_clock=True, id="search-screen-header")
 
         with Vertical(classes="search-screen"):
             with Horizontal(classes="top-bar"):

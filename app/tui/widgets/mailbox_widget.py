@@ -32,7 +32,7 @@ class ChangeMailboxWidget(Widget):
         self.mailbox_input = Input(placeholder="mailbox@domain.com", value=mailbox, classes="mailbox-input")
         self.password_input = Input(placeholder="Новый пароль", value=password, classes="password-input", password=True)
 
-        self.change_button = Button("Change", variant="primary", classes="change-single-btn", id="change-single-btn")
+        self.change_button = Button("Изменить", variant="primary", classes="change-single-btn", id="change-single-btn")
         self.delete_button = Button("x", variant="error", classes="delete-btn", id="delete-btn")
 
 
