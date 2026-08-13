@@ -335,6 +335,12 @@ SyncScreen {
 
 #mailbox-buttons-container {
   height: auto;
+  layout: grid;
+  grid-size: 5 1;
+  grid-columns: 1fr 1fr 1fr 3fr 1fr;
+  grid-gutter: 1;
+  height: 3;
+  margin: 1 0 0 1;
 }
 
 #mailbox-container {
