@@ -1,9 +1,10 @@
-import pytest
 from dataclasses import asdict
 
-from app.tui.screens.search.search_screen import DataFilter
-from app.database.db import transaction
-from app.database.repositories import MailboxRepository, ServerRepository
+import pytest
+
+from app.database import transaction
+from app.database import MailboxRepository, ServerRepository
+from app.tui.screens.search_screen import DataFilter
 
 
 @pytest.fixture

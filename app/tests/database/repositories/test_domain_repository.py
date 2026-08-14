@@ -1,8 +1,9 @@
 from collections import defaultdict
+
 import pytest
 
-from app.database.models import DomainModel, ServerModel
-from app.database.repositories import DomainRepository, ServerRepository
+from app.database import DomainModel, ServerModel
+from app.database import DomainRepository, ServerRepository
 from app.database import transaction
 
 

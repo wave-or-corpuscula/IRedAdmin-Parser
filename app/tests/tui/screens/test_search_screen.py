@@ -2,7 +2,7 @@ import pytest
 from textual.app import App
 from textual.widgets import Input
 
-from app.tui.screens.search.search_screen import SearchScreen
+from app.tui import SearchScreen
 
 
 class AppTest(App[None]):

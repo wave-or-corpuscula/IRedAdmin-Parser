@@ -1,5 +1,5 @@
 from app.database import transaction
-from app.database.repositories import ServerRepository
+from app.database import ServerRepository
 
 
 def test_get_servers():

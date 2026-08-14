@@ -1,5 +1,6 @@
-import pytest
 from pathlib import Path
+
+import pytest
 
 from app.storage import ConfigStorage
 from app.utils import ServerConfig

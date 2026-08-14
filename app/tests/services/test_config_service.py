@@ -1,5 +1,6 @@
-from app.database.db import transaction_factory
-from app.services.config_service import ConfigService
+from app.database import transaction_factory
+from app.services import ConfigService
+
 from app.tests.storage.test_config_storage import server_creds_factory, test_storage
 
 

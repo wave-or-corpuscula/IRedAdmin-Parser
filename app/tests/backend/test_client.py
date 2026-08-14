@@ -3,10 +3,10 @@ import json
 import pytest
 
 from app.backend import IRedParserClient
-from app.backend.exceptions import BackendError
-from app.database.db import transaction
-from app.database.repositories.server_repository import ServerRepository
-from app.utils.config import ServerConfig
+from app.backend import BackendError
+from app.database import transaction
+from app.database import ServerRepository
+from app.utils import ServerConfig
 
 BINARY_PATH = "./iredparser/bin/iredparser"
 TEST_CONFIG_PATH = ".test.creds.json"
