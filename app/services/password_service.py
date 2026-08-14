@@ -1,6 +1,6 @@
-from app.backend.client import IRedParserClient
-from app.backend.models import PasswordResponse
-from app.utils.config import ServerConfig
+from app.backend import IRedParserClient
+from app.backend import PasswordResponse
+from app.utils import ServerConfig
 
 
 class PasswordService:

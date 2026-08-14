@@ -1,8 +1,8 @@
 import asyncio
 
-from app.backend.client import IRedParserClient
-from app.backend.models import SyncResponse
-from app.utils.config import ServerConfig
+from app.backend import IRedParserClient
+from app.backend import SyncResponse
+from app.utils import ServerConfig
 
 
 class SyncService:

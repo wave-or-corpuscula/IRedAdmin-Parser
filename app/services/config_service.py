@@ -2,9 +2,9 @@ import asyncio
 from typing import Callable, List
 
 from app.backend import IRedParserClient
-from app.backend.models import AuthResponse
-from app.database.db import transaction_factory
-from app.database.repositories import ServerRepository
+from app.backend import AuthResponse
+from app.database import transaction_factory
+from app.database import ServerRepository
 from app.storage import ConfigStorage
 from app.utils import ServerConfig
 
