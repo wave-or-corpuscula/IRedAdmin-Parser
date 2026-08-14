@@ -28,4 +28,4 @@ async def test_filtering_mailboxes():
 
         assert search_input.value == "user@example.com"
 
-        data = screen.update_table_data()
+        screen.update_table_data()

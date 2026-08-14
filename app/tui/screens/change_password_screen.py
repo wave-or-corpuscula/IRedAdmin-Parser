@@ -1,12 +1,11 @@
 import asyncio
 from datetime import datetime
-from typing import Callable, Coroutine, List, Tuple
+from typing import Callable, List, Tuple
 
 from textual import on
 from textual.app import ComposeResult
-from textual.containers import Container, Grid, Horizontal, ScrollableContainer
-from textual.message import Message
-from textual.widgets import Button, Footer, Header, Input, Label, Select, Static
+from textual.containers import Container, Grid, ScrollableContainer
+from textual.widgets import Button, Header, Select, Static
 from textual_fspicker import FileOpen
 
 from app.backend import BackendError

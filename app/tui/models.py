@@ -1,5 +1,3 @@
-from typing import Protocol
-
 from textual.screen import ModalScreen, Screen
 
 from app.backend import BackendError

@@ -1,7 +1,6 @@
 from textual import on, work
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical, VerticalScroll
-from textual.screen import Screen
 from textual.widgets import Button
 
 from app.backend import BackendError
