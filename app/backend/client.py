@@ -2,9 +2,10 @@ import json
 import subprocess
 from typing import Optional
 
-from app.backend import BackendError
-from app.backend.models import AuthResponse, CLIResponse, SyncResponse, PasswordResponse
 from app.utils.config import ServerConfig
+
+from .exceptions import BackendError
+from .models import AuthResponse, CLIResponse, PasswordResponse, SyncResponse
 
 BINARY_PATH = "./iredparser/bin/iredparser"
 

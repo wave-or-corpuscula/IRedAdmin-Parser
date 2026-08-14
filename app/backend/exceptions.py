@@ -1,4 +1,4 @@
-from app.backend.models import CLIError
+from .models import CLIError
 
 
 class BackendError(Exception):
