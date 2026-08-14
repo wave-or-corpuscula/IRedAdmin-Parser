@@ -155,11 +155,11 @@ class ChangePasswordScreen(BaseScreen):
     async def _change_password_worker(self, widget: ChangeMailboxWidget) -> None:
         self._lock_ui()
         try:
-            mailbox, password = await self._change_password(widget)
+            password = await self._change_password(widget)
 
             widget.set_password(password)
             widget.enable_success()
-            self.notify_success(message=f"Изменен пароль на {mailbox}")
+            self.notify_success(message=f"Изменен пароль на {widget.mailbox}")
         except BackendError as e:
             self.notify_backend_error(e)
             widget.enable_error()
