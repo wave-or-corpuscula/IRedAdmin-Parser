@@ -1,5 +1,5 @@
+from dataclasses import asdict
 import json
-from dataclasses import dataclass, asdict
 from typing import Dict, List
 
 from app.utils import ServerConfig
