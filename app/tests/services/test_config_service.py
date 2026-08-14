@@ -1,10 +1,9 @@
 from app.database import transaction_factory
 from app.services import ConfigService
+from app.tests.storage.test_config_storage import server_creds_factory, test_storage # noqa: F401
 
-from app.tests.storage.test_config_storage import server_creds_factory, test_storage
 
-
-def test_config_service_crud(test_storage):
+def test_config_service_crud(test_storage): # noqa: F811
     N = 10
     factory = server_creds_factory()
     service = ConfigService(test_storage, transaction_factory(":memory:"))
