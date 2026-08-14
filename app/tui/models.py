@@ -1,10 +1,11 @@
 from typing import Protocol
+
 from textual.screen import ModalScreen, Screen
 
-from app.backend.exceptions import BackendError
+from app.backend import BackendError
 
 
-TCSS_PATH = "../../styles.tcss"
+TCSS_PATH = "../styles.tcss"
 
 class NotifyMixin:
 

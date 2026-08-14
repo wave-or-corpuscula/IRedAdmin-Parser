@@ -1,9 +1,9 @@
 from textual import on
-from textual.message import Message
-from textual.containers import Horizontal, Container, Vertical, ScrollableContainer
-from textual.widget import Widget
-from textual.widgets import Button, Header, Footer, Label, Input, Static
 from textual.app import ComposeResult
+from textual.containers import Container, Horizontal, ScrollableContainer, Vertical
+from textual.message import Message
+from textual.widget import Widget
+from textual.widgets import Button, Footer, Header, Input, Label, Static
 
 class ChangeMailboxWidget(Widget):
     CSS_PATH = "../../styles.tcss"

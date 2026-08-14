@@ -8,11 +8,12 @@ from textual.message import Message
 from textual.screen import ModalScreen
 from textual.widgets import Button, Label
 
-from app.backend.exceptions import BackendError
-from app.services.sync_service import SyncService
-from app.tui.models import BaseModalScreen
+from app.backend import BackendError
+from app.services import SyncService
 from app.services.config_service import _create_config_service
-from app.utils.config import ServerConfig
+from app.utils import ServerConfig
+
+from .. import BaseModalScreen
 
 
 class SyncButton(Button):

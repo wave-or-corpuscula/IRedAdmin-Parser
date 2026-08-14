@@ -1,8 +1,15 @@
-from .main_menu import MainMenuScreen
-from .config import ConfigScreen
-from .search import SearchScreen
-from .sync import SyncScreen
-from .change_password import ChangePasswordScreen
-from .progress import ProgressScreen
+from .change_password_screen import ChangePasswordScreen
+from .config_screen import ConfigScreen
+from .main_menu_screen import MainMenuScreen
+from .progress_screen import ProgressScreen
+from .search_screen import SearchScreen
+from .sync_screen import SyncScreen
 
-__all__ = [MainMenuScreen, ConfigScreen, SearchScreen, SyncScreen, ChangePasswordScreen, ProgressScreen]
+__all__ = [
+    MainMenuScreen,
+    ConfigScreen,
+    SearchScreen,
+    SyncScreen,
+    ChangePasswordScreen,
+    ProgressScreen,
+]

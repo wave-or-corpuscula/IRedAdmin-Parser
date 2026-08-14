@@ -6,21 +6,14 @@ from textual import on
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.reactive import reactive
-from textual.widgets import (
-    Button,
-    DataTable,
-    Header,
-    Input,
-    Label,
-    Select,
-    Collapsible,
-)
+from textual.widgets import Button, Collapsible, DataTable, Header, Input, Label, Select
 
-from app.database.db import transaction
-from app.database.repositories import ServerRepository
-from app.database.repositories.mailbox_repository import MailboxRepository
-from app.tui.models import BaseScreen
-from app.tui.screens.sync.sync_screen import SyncScreen
+from app.database import transaction
+from app.database import ServerRepository
+from app.database import MailboxRepository
+
+from .. import BaseScreen
+from .sync_screen import SyncScreen
 
 COLUMNS = [
     "ID",

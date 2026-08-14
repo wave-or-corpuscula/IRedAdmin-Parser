@@ -4,11 +4,12 @@ from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.screen import Screen
 from textual.widgets import Button
 
-from app.backend.exceptions import BackendError
+from app.backend import BackendError
 from app.services import ConfigService
-from app.tui.models import BaseScreen
-from app.tui.widgets import ServerConfigWidget
-from app.utils.config import ServerConfig
+from app.utils import ServerConfig
+
+from .. import BaseScreen
+from ..widgets import ServerConfigWidget
 
 
 class ConfigScreen(BaseScreen):

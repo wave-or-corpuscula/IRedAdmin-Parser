@@ -1,16 +1,14 @@
 from textual import on
-from textual.app import App, ComposeResult
-from textual.widgets import Button
+from textual.app import ComposeResult
 from textual.containers import Vertical
+from textual.widgets import Button
 
-from app.tui.models import BaseScreen
 from app.services.config_service import _create_config_service
-from app.database.db import transaction_factory
-from app.services.config_service import ConfigService
-from app.storage.config_storage import ConfigStorage
-from app.tui.screens.config.config_screen import ConfigScreen
-from app.tui.screens.search.search_screen import SearchScreen
-from app.tui.screens.change_password import ChangePasswordScreen
+
+from .. import BaseScreen
+from .change_password_screen import ChangePasswordScreen
+from .config_screen import ConfigScreen
+from .search_screen import SearchScreen
 
 
 class MainMenuScreen(BaseScreen):

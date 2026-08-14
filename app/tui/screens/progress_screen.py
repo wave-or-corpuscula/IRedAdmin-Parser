@@ -1,5 +1,3 @@
-
-
 from datetime import datetime
 from typing import Callable
 
@@ -9,7 +7,7 @@ from textual.containers import Center, Container, Horizontal
 from textual.message import Message
 from textual.widgets import Button, Label, ProgressBar, Static
 
-from app.tui.models import BaseModalScreen
+from .. import BaseModalScreen
 
 
 class ProgressScreen(BaseModalScreen):

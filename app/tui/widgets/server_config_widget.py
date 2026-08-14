@@ -6,7 +6,7 @@ from textual.message import Message
 from textual.widget import Widget
 from textual.widgets import Button, Input
 
-from app.utils.config import ServerConfig
+from app.utils import ServerConfig
 
 
 class ServerConfigWidget(Widget):

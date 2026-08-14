@@ -1,6 +1,7 @@
 import asyncio
 from datetime import datetime
 from typing import Callable, Coroutine, List, Tuple
+
 from textual import on
 from textual.app import ComposeResult
 from textual.containers import Container, Grid, Horizontal, ScrollableContainer
@@ -8,13 +9,14 @@ from textual.message import Message
 from textual.widgets import Button, Footer, Header, Input, Label, Select, Static
 from textual_fspicker import FileOpen
 
-from app.backend.exceptions import BackendError
-from app.services.password_service import PasswordService
+from app.backend import BackendError
+from app.services import PasswordService
 from app.services import MailboxFileParsingService
-from app.tui.models import BaseScreen
-from app.tui.screens.progress.progress_screen import ProgressScreen
-from app.tui.widgets import ChangeMailboxWidget
 from app.services.config_service import _create_config_service
+
+from .. import BaseScreen
+from ..widgets import ChangeMailboxWidget
+from .progress_screen import ProgressScreen
 
 
 class ChangePasswordScreen(BaseScreen):
