@@ -1,7 +1,7 @@
 import sqlite3
 from typing import List
 
-from app.database.models import DomainModel
+from ..models import DomainModel
 
 
 class DomainRepository:

@@ -1,8 +1,8 @@
 import sqlite3
 from typing import Any, Dict, List
 
-from app.database.models import DisplayModel
-from app.database.db import ALLOWED_SORTS
+from ..db import ALLOWED_SORTS
+from ..models import DisplayModel
 
 
 class MailboxRepository:

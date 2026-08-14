@@ -1,6 +1,6 @@
-import typing
-import sqlite3
 from contextlib import contextmanager
+import sqlite3
+import typing
 
 
 DB_PATH = "./data/ireddata.db"

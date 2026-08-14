@@ -1,7 +1,7 @@
 from sqlite3 import Connection
 from typing import List, Tuple
 
-from app.database.models import ServerModel
+from ..models import ServerModel
 
 
 class ServerRepository:
