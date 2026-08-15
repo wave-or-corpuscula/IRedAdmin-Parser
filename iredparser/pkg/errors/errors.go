@@ -16,6 +16,7 @@ const (
 
 const (
 	// HTTP codes
+	ErrCodeInternalServerError ErrCode = 1000
 	ErrCodePostRequestCreation ErrCode = 1001
 	ErrCodeGetRequestCreation  ErrCode = 1002
 	ErrCodePostRequestFailed   ErrCode = 1003
@@ -47,6 +48,7 @@ var (
 	ErrPostRequestFailed   = New(ErrTypeHTTP, ErrCodePostRequestFailed, errors.New("POST-request failed"))
 	ErrGetRequestFailed    = New(ErrTypeHTTP, ErrCodeGetRequestFailed, errors.New("GET-request failed"))
 	ErrFailedCaptureCookie = New(ErrTypeHTTP, ErrCodeFailedCaptureCookie, errors.New("could not capture cookie"))
+	ErrInternalServerError = New(ErrTypeHTTP, ErrCodeInternalServerError, errors.New("internal server error"))
 
 	// Parsing errors
 	ErrInvalidMemorySuffix = New(ErrTypeParsing, ErrCodeInvalidMemorySuffix, errors.New("invalid memory size suffix"))
@@ -97,7 +99,7 @@ func (e *IRedError) Unwrap() error {
 func (e *IRedError) Is(target error) bool {
 	var t *IRedError
 	if errors.As(target, &t) {
-		return e.Type == t.Type
+		return e.Type == t.Type && e.Code == t.Code
 	}
 
 	return false
