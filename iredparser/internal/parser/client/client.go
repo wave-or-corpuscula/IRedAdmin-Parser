@@ -86,9 +86,17 @@ func (c *Client) AuthServerURL(ctx context.Context, loginURL string, login strin
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("client: post request failed: %w", err)
+		return apperrors.ErrPostRequestFailed
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusInternalServerError {
+		return apperrors.ErrInternalServerError
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return apperrors.ErrPostRequestFailed
+	}
 
 	err = utils.ExtractLoginError(resp.Body)
 	if err != nil {
