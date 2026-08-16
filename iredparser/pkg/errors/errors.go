@@ -16,12 +16,13 @@ const (
 
 const (
 	// HTTP codes
-	ErrCodeInternalServerError ErrCode = 1000
-	ErrCodePostRequestCreation ErrCode = 1001
-	ErrCodeGetRequestCreation  ErrCode = 1002
-	ErrCodePostRequestFailed   ErrCode = 1003
-	ErrCodeGetRequestFailed    ErrCode = 1004
-	ErrCodeFailedCaptureCookie ErrCode = 1005
+	ErrCodeInternalServerError  ErrCode = 1000
+	ErrCodePostRequestCreation  ErrCode = 1001
+	ErrCodeGetRequestCreation   ErrCode = 1002
+	ErrCodePostRequestFailed    ErrCode = 1003
+	ErrCodeGetRequestFailed     ErrCode = 1004
+	ErrCodeFailedCaptureCookie  ErrCode = 1005
+	ErrCodeUnexpectedStatusCode ErrCode = 1006
 
 	// Parsig codes
 	ErrCodeInvalidMemorySuffix ErrCode = 2001
@@ -43,12 +44,13 @@ const (
 var (
 
 	// HTTP errors
-	ErrPostRequestCreation = New(ErrTypeHTTP, ErrCodePostRequestCreation, errors.New("POST-request creation failed"))
-	ErrGetRequestCreation  = New(ErrTypeHTTP, ErrCodeGetRequestCreation, errors.New("GET-request creation failed"))
-	ErrPostRequestFailed   = New(ErrTypeHTTP, ErrCodePostRequestFailed, errors.New("POST-request failed"))
-	ErrGetRequestFailed    = New(ErrTypeHTTP, ErrCodeGetRequestFailed, errors.New("GET-request failed"))
-	ErrFailedCaptureCookie = New(ErrTypeHTTP, ErrCodeFailedCaptureCookie, errors.New("could not capture cookie"))
-	ErrInternalServerError = New(ErrTypeHTTP, ErrCodeInternalServerError, errors.New("internal server error"))
+	ErrPostRequestCreation  = New(ErrTypeHTTP, ErrCodePostRequestCreation, errors.New("POST-request creation failed"))
+	ErrGetRequestCreation   = New(ErrTypeHTTP, ErrCodeGetRequestCreation, errors.New("GET-request creation failed"))
+	ErrPostRequestFailed    = New(ErrTypeHTTP, ErrCodePostRequestFailed, errors.New("POST-request failed"))
+	ErrGetRequestFailed     = New(ErrTypeHTTP, ErrCodeGetRequestFailed, errors.New("GET-request failed"))
+	ErrFailedCaptureCookie  = New(ErrTypeHTTP, ErrCodeFailedCaptureCookie, errors.New("could not capture cookie"))
+	ErrInternalServerError  = New(ErrTypeHTTP, ErrCodeInternalServerError, errors.New("internal server error"))
+	ErrUnexpectedStatusCode = New(ErrTypeHTTP, ErrCodeUnexpectedStatusCode, errors.New("unexpected status code"))
 
 	// Parsing errors
 	ErrInvalidMemorySuffix = New(ErrTypeParsing, ErrCodeInvalidMemorySuffix, errors.New("invalid memory size suffix"))
