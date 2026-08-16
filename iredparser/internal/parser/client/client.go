@@ -147,6 +147,10 @@ func (c *Client) ChangePassword(ctx context.Context, server string, mailbox stri
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusInternalServerError {
+		return apperrors.ErrInternalServerError
+	}
+
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("change password failed with status %d: %s", resp.StatusCode, string(body))
@@ -186,6 +190,14 @@ func (c *Client) Get(ctx context.Context, url string) ([]byte, error) {
 		return nil, apperrors.ErrGetRequestFailed
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusInternalServerError {
+		return nil, apperrors.ErrInternalServerError
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, apperrors.ErrUnexpectedStatusCode
+	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
