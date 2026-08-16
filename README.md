@@ -211,16 +211,13 @@ cd iredparser && go build -o bin/iredparser ./cmd/parser-cli/main.go
 
 # Установка Python TUI
 python3 -m venv .venv && source .venv/bin/activate
-pip install textual
+pip install -r requirements.txt
 
 # Создание файла с кредами
 cp .test.creds.json.dummy config.json
 # Отредактируйте config.json с данными вашего сервера
 
-# Синхронизация данных
-./iredparser/bin/iredparser -c "$(cat config.json)" sync
-
-# Просмотр
+# Запуск
 source .venv/bin/activate && python run.py
 ```
 
