@@ -11,8 +11,11 @@ from textual.widgets import Button, Collapsible, DataTable, Header, Input, Label
 from app.database import transaction
 from app.database import ServerRepository
 from app.database import MailboxRepository
+from app.services import PasswordService
+from app.services.config_service import _create_config_service
 
 from .. import BaseScreen
+from .change_user_password_screen import ChangeUserPasswordScreen
 from .sync_screen import SyncScreen
 
 COLUMNS = [
@@ -101,6 +104,8 @@ class SearchScreen(BaseScreen):
             self.servers = [("Все", None)] + repo.get_tuples()
 
         self.selected_rows_lb = Label(id="selected-rows-count")
+        self.password_service = PasswordService()
+        self.config_service = _create_config_service()
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True, id="search-screen-header")
@@ -166,7 +171,20 @@ class SearchScreen(BaseScreen):
     @on(DataTable.RowSelected)
     def handle_select_row(self, event: DataTable.RowSelected) -> None:
         row_data = event.data_table.get_row(event.row_key)
-        self.notify_success(title="RowSelected", message=str(row_data))
+        server = row_data[1]
+        mailbox = row_data[3]
+
+        config = self.config_service.get(server)
+        if config is None:
+            self.notify_error(message=f"Отсутствуют реквизиты для сервера: {server}")
+            return
+
+        def change(password: str) -> str:
+            resp = self.password_service.change_password(config, mailbox, password)
+            return resp.password
+
+        screen = ChangeUserPasswordScreen(server, mailbox, change)
+        self.app.push_screen(screen)
 
     @on(DataTable.HeaderSelected)
     def handle_highlight_column(self, event: DataTable.HeaderSelected) -> None:
