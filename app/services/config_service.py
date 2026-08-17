@@ -23,6 +23,14 @@ class ConfigService:
         self.storage.save(creds)
         return config_id
 
+    def get(self, server: str) -> ServerConfig | None:
+        configs = self.storage.get_all()
+        for config in configs:
+            if config.server == server:
+                return config
+
+        return None
+
     def get_all(self) -> List[ServerConfig]:
         return self.storage.get_all()
 
