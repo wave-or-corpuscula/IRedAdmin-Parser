@@ -1,14 +1,14 @@
 from .models import BaseModalScreen, BaseScreen
 from .screens import (
     ChangePasswordScreen,
+    ChangeUserPasswordScreen,
     ConfigScreen,
     MainMenuScreen,
     ProgressScreen,
     SearchScreen,
     SyncScreen,
-    ChangeUserPasswordScreen,
 )
-from .widgets import ChangeMailboxWidget, ServerConfigWidget
+from .widgets import ChangeMailboxWidget, SecretInput, ServerConfigWidget
 
 
 __all__ = [
@@ -25,4 +25,5 @@ __all__ = [
 
     ChangeMailboxWidget,
     ServerConfigWidget,
+    SecretInput,
 ]
