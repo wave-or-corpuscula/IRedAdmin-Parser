@@ -3,11 +3,12 @@ from typing import Callable
 from textual import on
 from textual.app import ComposeResult
 from textual.containers import Center, Container, Horizontal
-from textual.widgets import Button, Input, Label, Static
+from textual.widgets import Button, Label, Static
 
 from app.backend.exceptions import BackendError
 
 from ..models import BaseModalScreen
+from ..widgets import SecretInput
 
 
 class ChangeUserPasswordScreen(BaseModalScreen):
@@ -24,7 +25,13 @@ class ChangeUserPasswordScreen(BaseModalScreen):
                 yield Label("Смена пароля", id="change-password-title")
             yield Static(f"Сервер: {self.server}", id="server-info")
             yield Static(f"Почтовый ящик: {self.mailbox}", id="mailbox-info")
-            yield Input(placeholder="Новый пароль (пусто: сгенерированный)", password=True, id="new-password-input")
+
+            yield SecretInput(
+                placeholder="Новый пароль (пусто: сгенерированный)",
+                password=True,
+                id="new-password-input"
+            )
+
             with Horizontal(id="change-password-buttons"):
                 yield Button("Изменить", variant="success", id="change-password-confirm-btn")
                 yield Button("Выйти", variant="default", id="change-password-exit-btn")
@@ -35,7 +42,7 @@ class ChangeUserPasswordScreen(BaseModalScreen):
 
     @on(Button.Pressed, "#change-password-confirm-btn")
     def change_password(self, _: Button.Pressed) -> None:
-        pass_input = self.query_one("#new-password-input", Input)
+        pass_input = self.query_one("#new-password-input", SecretInput)
 
         password = pass_input.value
         try:
