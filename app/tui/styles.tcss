@@ -461,3 +461,59 @@ ProgressScreen > Container > Horizontal {
     width: 30%;
     margin-left: 1;
 }
+
+/* ### Change user password screen ### */
+
+ChangeUserPasswordScreen {
+    align: center middle;
+    background: $surface 80%;
+}
+
+ChangeUserPasswordScreen > Container {
+    width: 50;
+    height: auto;
+    max-height: 80%;
+    border: solid $primary;
+    background: $surface;
+    padding: 2;
+    layout: vertical;
+}
+
+#change-password-title {
+    text-style: bold;
+    text-align: center;
+    margin-bottom: 2;
+    color: $primary;
+}
+
+#server-info {
+    margin-bottom: 1;
+    color: $text-muted;
+}
+
+#mailbox-info {
+    margin-bottom: 2;
+    color: $text-muted;
+}
+
+#new-password-input {
+    margin-bottom: 2;
+    width: 100%;
+}
+
+#change-password-buttons {
+    height: 3;
+    align: center middle;
+    layout: grid;
+    grid-size: 2 1;
+    grid-columns: 1fr 1fr;
+    grid-gutter: 1;
+}
+
+#change-password-confirm-btn {
+    width: 100%;
+}
+
+#change-password-exit-btn {
+    width: 100%;
+}

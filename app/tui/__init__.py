@@ -6,6 +6,7 @@ from .screens import (
     ProgressScreen,
     SearchScreen,
     SyncScreen,
+    ChangeUserPasswordScreen,
 )
 from .widgets import ChangeMailboxWidget, ServerConfigWidget
 
@@ -20,6 +21,7 @@ __all__ = [
     MainMenuScreen,
     SearchScreen,
     SyncScreen,
+    ChangeUserPasswordScreen,
 
     ChangeMailboxWidget,
     ServerConfigWidget,

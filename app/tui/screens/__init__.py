@@ -4,6 +4,7 @@ from .main_menu_screen import MainMenuScreen
 from .progress_screen import ProgressScreen
 from .search_screen import SearchScreen
 from .sync_screen import SyncScreen
+from .change_user_password_screen import ChangeUserPasswordScreen
 
 __all__ = [
     MainMenuScreen,
@@ -12,4 +13,5 @@ __all__ = [
     SyncScreen,
     ChangePasswordScreen,
     ProgressScreen,
+    ChangeUserPasswordScreen
 ]
