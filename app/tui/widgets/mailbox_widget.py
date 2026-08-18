@@ -5,6 +5,8 @@ from textual.message import Message
 from textual.widget import Widget
 from textual.widgets import Button, Input
 
+from .secret_input import SecretInput
+
 class ChangeMailboxWidget(Widget):
     CSS_PATH = "../../styles.tcss"
 
@@ -30,7 +32,7 @@ class ChangeMailboxWidget(Widget):
     def __init__(self, mailbox: str = "", password: str = "", *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.mailbox_input = Input(placeholder="mailbox@domain.com", value=mailbox, classes="mailbox-input")
-        self.password_input = Input(placeholder="Новый пароль", value=password, classes="password-input", password=True)
+        self.password_input = SecretInput(placeholder="Новый пароль", value=password, classes="password-input")
 
         self.change_button = Button("Изменить", variant="primary", classes="change-single-btn", id="change-single-btn")
         self.delete_button = Button("x", variant="error", classes="delete-btn", id="delete-btn")
