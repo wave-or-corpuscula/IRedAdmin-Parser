@@ -23,7 +23,7 @@ class ConfigScreen(BaseScreen):
 
     def compose(self) -> ComposeResult:
         with Vertical(id="config-container"):
-            with VerticalScroll(id="servers-list-container"):
+            with VerticalScroll():
                 with Center(id="servers-list-container"):
                     pass
             with Horizontal(id="config-footer-container"):
