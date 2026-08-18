@@ -11,7 +11,6 @@ class SecretInput(Horizontal):
     DEFAULT_CSS = """
     SecretInput {
         height: 3;
-        margin-bottom: 2;
     }
 
     SecretInput > Input {
@@ -48,6 +47,7 @@ class SecretInput(Horizontal):
 
     def __init__(
         self,
+        value: str = "",
         placeholder: str = "Введите пароль",
         password: bool = True,
         name: str | None = None,
@@ -55,12 +55,14 @@ class SecretInput(Horizontal):
         classes: str | None = None,
     ) -> None:
         super().__init__(name=name, id=id, classes=classes)
+        self._value = value
         self._password_visible = False
         self._placeholder = placeholder
         self._password = password
 
     def compose(self) -> ComposeResult:
         yield Input(
+            value=self._value,
             placeholder=self._placeholder,
             password=self._password,
             id="secret-input-field"

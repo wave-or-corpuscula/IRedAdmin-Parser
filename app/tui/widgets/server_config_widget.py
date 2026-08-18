@@ -1,3 +1,4 @@
+from app.utils import ServerConfig
 from textual import on
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
@@ -6,7 +7,7 @@ from textual.message import Message
 from textual.widget import Widget
 from textual.widgets import Button, Input
 
-from app.utils import ServerConfig
+from .secret_input import SecretInput
 
 
 class ServerConfigWidget(Widget):
@@ -68,7 +69,7 @@ class ServerConfigWidget(Widget):
             value=self.config.server, placeholder="Имя сервера"
         )
         self.login_inp = Input(value=self.config.login, placeholder="Имя пользователя")
-        self.password_inp = Input(value=self.config.password, placeholder="Пароль")
+        self.password_inp = SecretInput(value=self.config.password, placeholder="Пароль")
         self.save_button = Button(
             label="Сохранить",
             classes="save-button",

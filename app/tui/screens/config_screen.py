@@ -1,6 +1,6 @@
 from textual import on, work
 from textual.app import ComposeResult
-from textual.containers import Horizontal, Vertical, VerticalScroll
+from textual.containers import Center, Horizontal, Vertical, VerticalScroll
 from textual.widgets import Button
 
 from app.backend import BackendError
@@ -24,7 +24,8 @@ class ConfigScreen(BaseScreen):
     def compose(self) -> ComposeResult:
         with Vertical(id="config-container"):
             with VerticalScroll(id="servers-list-container"):
-                pass
+                with Center(id="servers-list-container"):
+                    pass
             with Horizontal(id="config-footer-container"):
                 yield Button(
                     label="Добавить", id="add_config_button", variant="success"
