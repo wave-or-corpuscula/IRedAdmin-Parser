@@ -154,28 +154,31 @@ Screen {
 }
 
 Collapsible {
-    dock: right;         
-    width: 30%;          
-    height: auto;        
-    layer: top;          
+    dock: right;
+    width: 30%;
+    height: auto;
+    layer: top;
     padding: 0;
     background: transparent;
-    margin: 0 2 0 0;     
+    margin: 0 2 0 0;
 }
 
 Collapsible > CollapsibleTitle {
     width: 100%;
     background: $primary;
     color: $text;
+    border: black;
     height: 3;
-    border: none;
     text-style: bold;
 }
 
 Collapsible > CollapsibleTitle:focus {
     background: $accent;
     color: $text;
-    align: center middle;
+}
+
+Collapsible > CollapsibleTitle:hover {
+    border: $accent;
 }
 
 Contents {
