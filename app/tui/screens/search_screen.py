@@ -7,11 +7,15 @@ from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.reactive import reactive
 from textual.widgets import Button, Collapsible, DataTable, Header, Input, Label, Select
+from textual.widgets.data_table import RowDoesNotExist
 
+from app.backend.client import IRedParserClient
+from app.backend.exceptions import BackendError
 from app.database import transaction
 from app.database import ServerRepository
 from app.database import MailboxRepository
 from app.services import PasswordService
+from app.services import WebAuthService
 from app.services.config_service import _create_config_service
 
 from .. import BaseScreen
@@ -91,6 +95,9 @@ def validate_quota(func):
 
 
 class SearchScreen(BaseScreen):
+
+    TITLE = "Поиск пользователей"
+
     filters = reactive(DataFilter())
 
     sort_column = reactive("address")
@@ -106,6 +113,8 @@ class SearchScreen(BaseScreen):
         self.selected_rows_lb = Label(id="selected-rows-count")
         self.password_service = PasswordService()
         self.config_service = _create_config_service()
+        self.web_service = WebAuthService()
+        self.client = IRedParserClient()
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True, id="search-screen-header")
@@ -159,14 +168,51 @@ class SearchScreen(BaseScreen):
             with Horizontal(classes="footer-block"):
                 with Horizontal(classes="left"):
                     yield self.selected_rows_lb
-                with Horizontal(classes="right"):
-                    yield Button(label="Синхронизовать", id="sync-mailboxes")
+                with Horizontal(classes="right", id="search-screen-right-btn-block"):
+                    yield Button(label="Открыть в браузере", id="open-in-borwser-btn", variant="success")
+                    yield Button(label="Синхронизовать", id="sync-mailboxes", variant="primary")
                     yield Button(label="Назад", id="search-nav-back")
 
     def on_mount(self) -> None:
         table: DataTable = self.query_one(DataTable)
         table.add_columns(*COLUMNS)
         self.update_table_data()
+
+    @on(Button.Pressed, "#open-in-borwser-btn")
+    def open_in_prowser(self, _: Button.Pressed) -> None:
+        table = self.query_one(DataTable)
+
+        if table.row_count == 0:
+            self.notify_warning(message="Отсутствуют выбранные строки!")
+            return
+
+        row = table.get_row_at(table.cursor_row)
+        server, mailbox = row[1], row[3]
+        url = f"https://{server}/iredadmin/profile/user/general/{mailbox}"
+
+        config = self.config_service.get(server)
+        if config is None:
+            self.notify_error(message=f"Отсутствуют реквизиты для сервера: {server}")
+            return
+
+        try:
+            resp = self.client.auth_check(config)
+
+            name, value = resp.cookie_string.split("=")
+            cookie = {
+                "name": name,
+                "value": value,
+                "domain": server,
+                "path": "/",
+                "url": url,
+            }
+
+            self.web_service.open_user_page(url, cookie)
+        except BackendError as e:
+            self.notify_backend_error(e)
+        except Exception as e:
+            self.notify_error(message=str(e))
+
 
     @on(DataTable.RowSelected)
     def handle_select_row(self, event: DataTable.RowSelected) -> None:

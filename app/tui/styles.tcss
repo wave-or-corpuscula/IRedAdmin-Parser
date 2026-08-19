@@ -237,6 +237,10 @@ DataTable > .datatable--header {
     background: $error;
 }
 
+#search-screen-right-btn-block > Widget {
+  margin: 0 1 0 1;
+}
+
 
 .footer-block {
   margin: 0 1 1 1;
