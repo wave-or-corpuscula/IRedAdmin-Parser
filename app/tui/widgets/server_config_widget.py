@@ -7,7 +7,7 @@ from textual.message import Message
 from textual.widget import Widget
 from textual.widgets import Button, Input
 
-from .secret_input import SecretInput
+from .secret_input_widget import SecretInput
 
 
 class ServerConfigWidget(Widget):
