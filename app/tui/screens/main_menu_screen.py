@@ -13,8 +13,8 @@ from .search_screen import SearchScreen
 
 class MainMenuScreen(BaseScreen):
     
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self) -> None:
+        super().__init__()
 
     def compose(self) -> ComposeResult:
         with Vertical(id="main-menu-container"):
@@ -30,7 +30,12 @@ class MainMenuScreen(BaseScreen):
 
     @on(Button.Pressed, "#tools_button")
     def nav_tools_screen(self) -> None:
-        passwords_change_screen = ChangePasswordScreen()
+        config_service = _create_config_service()
+        servers = config_service.get_all()
+        if len(servers) == 0:
+            self.notify_error(message="Для изменения паролей добавте аутентификационные данные на странице конфигурации")
+            return
+        passwords_change_screen = ChangePasswordScreen(servers)
         self.app.push_screen(passwords_change_screen)
 
     @on(Button.Pressed, "#config-button")

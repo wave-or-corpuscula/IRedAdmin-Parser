@@ -11,7 +11,7 @@ from textual_fspicker import FileOpen
 from app.backend import BackendError
 from app.services import PasswordService
 from app.services import MailboxFileParsingService
-from app.services.config_service import _create_config_service
+from app.utils import ServerConfig
 
 from .. import BaseScreen
 from ..widgets import ChangeMailboxWidget
@@ -24,14 +24,12 @@ class ChangePasswordScreen(BaseScreen):
 
     progress_screen: ProgressScreen
 
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self, servers: List[ServerConfig]) -> None:
+        super().__init__()
         self.empty_state = Static("Ящиков еще не добавлено.\nНажмите 'Добавить' или 'Из файла' чтобы начать.", classes="empty-state")
         self.password_service = PasswordService()
-
-        self.config_service = _create_config_service()
-        self.servers = self.config_service.get_all()
-        self.current_config = self.servers[0]
+        self.servers = servers
+        self.current_config = servers[0]
 
     def compose(self) -> ComposeResult:
         yield Container(
