@@ -71,5 +71,5 @@ class DisplayModel:
             "✅" if self.is_admin else "❌",
             format_bytes(self.quota_bytes),
             format_bytes(self.used_memory_bytes),
-            f"{int(self.usage_percent)}",
+            f"{int(self.usage_percent)}%",
         )
