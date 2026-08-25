@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"iredparser/internal/parser"
 	"iredparser/internal/parser/client"
+	apperrors "iredparser/pkg/errors"
 	"iredparser/pkg/utils"
 	"strings"
 
@@ -55,17 +56,24 @@ func (p *DomainParser) Parse(ctx context.Context, server string) ([]*parser.Doma
 
 func parseRow(row *goquery.Selection) (*parser.Domain, error) {
 	domain := strings.TrimSpace(row.Find("td").Eq(1).Text())
+	if domain == "" {
+		return nil, apperrors.ErrEmptyDomain
+	}
 	displayName := strings.TrimSpace(row.Find("td").Eq(2).Text())
 
 	memoryField := strings.TrimSpace(row.Find("td").Eq(3).Text())
 	usedQuota := strings.Split(memoryField, "/")
 	if len(usedQuota) != 2 {
-		return nil, fmt.Errorf("domains parser: invalid quota format: %q, %s", memoryField, domain)
+		return nil, apperrors.ErrInvalidQuotaFormat.Wrapf("%q, %s", memoryField, domain)
 	}
 	usedMemoryWithSuffix, quotaStr := strings.TrimSpace(usedQuota[0]), strings.TrimSpace(usedQuota[1])
 	usedMemory, err := utils.GetMemoryBytes(usedMemoryWithSuffix)
 	if err != nil {
 		return nil, err
+	}
+
+	if usedMemory == -1 {
+		return nil, apperrors.ErrInvalidMemoryValue.Wrap("used memory cannot be unlimited")
 	}
 
 	quota, err := utils.GetMemoryBytes(quotaStr)
@@ -74,7 +82,7 @@ func parseRow(row *goquery.Selection) (*parser.Domain, error) {
 	}
 
 	domainData := parser.Domain{
-		Disabled:        true, // Fix сделать парсинг активности домена
+		Disabled:        false, // Fix сделать парсинг активности домена
 		Name:            domain,
 		DisplayName:     displayName,
 		QuotaBytes:      quota,
