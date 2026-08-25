@@ -26,8 +26,11 @@ const (
 
 	// Parsig codes
 	ErrCodeInvalidMemorySuffix ErrCode = 2001
-	ErrCodeCannoFinsCSRFToken  ErrCode = 2002
-	ErrCodeChangePassowrd      ErrCode = 2002
+	ErrCodeInvalidQuotaFormat  ErrCode = 2002
+	ErrCodeCannoFinsCSRFToken  ErrCode = 2003
+	ErrCodeChangePassowrd      ErrCode = 2004
+	ErrCodeInvalidMemoryValue  ErrCode = 2005
+	ErrCodeEmptyDomain         ErrCode = 2006
 
 	// Authentication codes
 	ErrCodeLoginRequired        ErrCode = 3001
@@ -55,6 +58,9 @@ var (
 	// Parsing errors
 	ErrInvalidMemorySuffix = New(ErrTypeParsing, ErrCodeInvalidMemorySuffix, errors.New("invalid memory size suffix"))
 	ErrCannoFindCSRFToken  = New(ErrTypeParsing, ErrCodeCannoFinsCSRFToken, errors.New("cannot find csrf token"))
+	ErrInvalidQuotaFormat  = New(ErrTypeParsing, ErrCodeInvalidQuotaFormat, errors.New("invalid quota format"))
+	ErrInvalidMemoryValue  = New(ErrTypeParsing, ErrCodeInvalidMemoryValue, errors.New("invalid memory value"))
+	ErrEmptyDomain         = New(ErrTypeParsing, ErrCodeEmptyDomain, errors.New("empty domain"))
 
 	// Authentication errors
 	ErrLoginRequired        = New(ErrTypeAuthentication, ErrCodeLoginRequired, errors.New("login required"))
@@ -91,6 +97,30 @@ func New(Type ErrType, Code ErrCode, Err error) *IRedError {
 		Type: Type,
 		Code: Code,
 		Err:  Err,
+	}
+}
+
+func (e *IRedError) Wrap(message string) *IRedError {
+	if e == nil {
+		return nil
+	}
+
+	return &IRedError{
+		Type: e.Type,
+		Code: e.Code,
+		Err:  fmt.Errorf("%w: %s", e.Err, message),
+	}
+}
+
+func (e *IRedError) Wrapf(format string, args ...any) *IRedError {
+	if e == nil {
+		return nil
+	}
+
+	return &IRedError{
+		Type: e.Type,
+		Code: e.Code,
+		Err:  fmt.Errorf("%w: %s", e.Err, fmt.Sprintf(format, args...)),
 	}
 }
 
