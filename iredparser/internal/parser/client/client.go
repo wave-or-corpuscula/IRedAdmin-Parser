@@ -49,6 +49,12 @@ func createHTTPClient() (*http.Client, error) {
 	return client, nil
 }
 
+func NewClientRaw(client *http.Client) *Client {
+	return &Client{
+		httpClient: client,
+	}
+}
+
 func NewClient() (*Client, error) {
 	client, err := createHTTPClient()
 	if err != nil {
