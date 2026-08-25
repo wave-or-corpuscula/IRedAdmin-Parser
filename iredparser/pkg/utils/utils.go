@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	apperrors "iredparser/pkg/errors"
-	"log"
 	"math"
 	"math/big"
 	"strconv"
@@ -80,16 +79,19 @@ func GetMemoryBytes(memWithSuffix string) (int64, error) {
 		if memWithSuffix == "Unlimited" {
 			return -1, nil
 		}
-		log.Printf("unknown memory size suffix: %q\n", memWithSuffix)
-		return -1, apperrors.ErrInvalidMemorySuffix
+		return 0, apperrors.ErrInvalidMemorySuffix.Wrap(memWithSuffix)
 	}
 
 	usedMemoryStr := strings.TrimSpace(strings.TrimSuffix(memWithSuffix, memorySuffix[suffixInd]))
 	usedMemory, err := strconv.ParseFloat(usedMemoryStr, 64)
 	if err != nil {
-		log.Fatalf("invalid memory value: %q, %s\n", usedMemoryStr, err)
+		return 0, apperrors.ErrInvalidMemoryValue.Wrap(usedMemoryStr)
 	}
-	return int64(usedMemory * math.Pow(1000, float64(suffixInd))), nil
+
+	if usedMemory < 0 {
+		return 0, apperrors.ErrInvalidMemoryValue.Wrap("memory cannot be negative")
+	}
+	return int64(usedMemory * math.Pow(1024, float64(suffixInd))), nil
 }
 
 func ExtractLoginError(body io.ReadCloser) error {
