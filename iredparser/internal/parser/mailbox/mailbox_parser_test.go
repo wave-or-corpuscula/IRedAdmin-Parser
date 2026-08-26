@@ -1,72 +1,219 @@
 package mailboxparser
 
 import (
-	"context"
-	"iredparser/common"
+	"bytes"
+	"errors"
+	"html/template"
+	"io"
 	"iredparser/internal/parser"
 	"iredparser/internal/parser/client"
+	apperrors "iredparser/pkg/errors"
+	"net/http"
+	"net/http/cookiejar"
+	"strings"
 	"testing"
-
-	apptesting "iredparser/testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-const mailWorkers = 5
+const mailboxTemplate = `
+<table>
+	<tbody>
+		{{ range . }}
+		<tr class="{{ if .Disabled }}disabled{{ else }}active{{ end }}">
+			<td class="checkbox">
+					<input type="checkbox" name="mail" class="checkbox" value="{{ .Addres }}" alt="active">
+			</td>
+			<td class="vcenter">
+					<a href="/iredadmin/profile/user/general/{{ .Addres }}">
+							<i class="fa fa-cog fa-lg fr-space"></i>
+					</a>
+					<a href="/iredadmin/profile/user/general/{{ .Addres }}">{{ .DisplayName }}</a>
+			</td>
+			<td class="vcenter">
+					<span><strong>{{ .DisplayName }}</strong></span>
+					<span class="color-grey"><em>{{ .Domain }}</em></span>
+			</td>
+			<td class="vcenter"></td>
+			<td class="vcenter"></td>
+			<td class="vcenter" data-sort-value="0">{{ .Quota }}</td>
+		</tr>
+	</tbody>
+</table>
+`
 
-func getTestDomain() parser.Domain {
-	return parser.Domain{Name: "example.com"}
+type MailboxData struct {
+	Disabled    bool
+	IsAdmin     bool
+	DisplayName string
+	Addres      string
+	Domain      string
+	Quota       string
 }
 
-func GetAuthClient(ctx context.Context, config common.ServerConfig) (*client.Client, error) {
-	c, err := client.NewClient()
-	if err != nil {
-		return nil, err
+func makeMailbox(disabled bool, isAdmin bool, displayName string, addres string, quota string) (*MailboxData, error) {
+	if !strings.Contains(addres, "@") {
+		return nil, errors.New("no '@' in mailbox addres")
 	}
-	return c, c.Auth(ctx, config)
+
+	domain := strings.Split(addres, "@")[1]
+
+	return &MailboxData{
+		Disabled:    disabled,
+		IsAdmin:     isAdmin,
+		DisplayName: displayName,
+		Addres:      addres,
+		Domain:      domain,
+		Quota:       quota,
+	}, nil
 }
 
-func GetTestMailboxParser(ctx context.Context, config common.ServerConfig) (*MailboxParser, error) {
-	c, err := GetAuthClient(ctx, config)
-	if err != nil {
-		return nil, err
-	}
-
-	parser := NewMailboxParser(c, mailWorkers)
-	return parser, nil
+type mockTransport struct {
+	roundTripFunc func(req *http.Request) (*http.Response, error)
 }
 
-func TestGetPages(t *testing.T) {
-	configs, err := apptesting.GetAuthConfigs()
-	assert.NoError(t, err)
+func (m *mockTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	return m.roundTripFunc(req)
+}
 
-	for _, config := range configs {
-		p, err := GetTestMailboxParser(t.Context(), config)
-		assert.NoError(t, err)
-
-		domain := getTestDomain()
-
-		pages, err := p.getPagesAmount(t.Context(), config.Server, domain)
-		assert.NoError(t, err)
-		assert.True(t, pages > 0)
-
-		t.Logf("got %d pages from %s\n", pages, config.Server)
+func makeResponse(code int, body string, header http.Header) *http.Response {
+	return &http.Response{
+		StatusCode: code,
+		Body:       io.NopCloser(strings.NewReader(body)),
+		Header:     header,
 	}
 }
 
-func TestParseMailboxes(t *testing.T) {
-	configs, err := apptesting.GetAuthConfigs()
-	assert.NoError(t, err)
+func getTestClient(handler func(req *http.Request) (*http.Response, error)) *client.Client {
+	jar, _ := cookiejar.New(nil)
 
-	for _, config := range configs {
-		p, err := GetTestMailboxParser(t.Context(), config)
-		assert.NoError(t, err)
+	httpClient := &http.Client{
+		Transport: &mockTransport{
+			roundTripFunc: handler,
+		},
+		Jar: jar,
+	}
 
-		domain := getTestDomain()
+	return client.NewClientRaw(httpClient)
+}
 
-		boxes, err := p.Parse(t.Context(), config.Server, domain)
-		assert.NoError(t, err)
+func getTestMailboxParser(handler func(req *http.Request) (*http.Response, error), workers int) *MailboxParser {
+	c := getTestClient(handler)
 
-		t.Logf("got %d mailboxes from %s\n", len(boxes), config.Server)
+	parser := NewMailboxParser(c, workers)
+	return parser
+}
+
+type PageData struct {
+	Num int
+}
+
+const pagesTemplate = `
+<span class="pages">
+    {{range .}}
+        {{if eq . "1"}}
+            <a href="#" class="active"><span>{{.}}</span></a>
+        {{else}}
+            <a href="/iredadmin/users/domain.com/page/{{.}}?order_name=quota"><span>{{.}}</span></a>
+        {{end}}
+    {{end}}
+</span>
+`
+
+func TestGetPagesAmount(t *testing.T) {
+	workers := 1
+
+	tests := []struct {
+		name          string
+		pages         []string
+		server        string
+		domain        parser.Domain
+		expectedError error
+	}{
+		{
+			name:          "success - valid row",
+			pages:         []string{"1"},
+			server:        "mailserver",
+			domain:        parser.Domain{Name: "test.com"},
+			expectedError: nil,
+		},
+		{
+			name:          "success - valid rows",
+			pages:         []string{"1", "2", "3", "4"},
+			server:        "mailserver",
+			domain:        parser.Domain{Name: "test.com"},
+			expectedError: nil,
+		},
+		{
+			name:          "success - invalid in middle",
+			pages:         []string{"1", "abc", "invalid", "4"},
+			server:        "mailserver",
+			domain:        parser.Domain{Name: "test.com"},
+			expectedError: nil,
+		},
+		{
+			name:          "error - only invalid",
+			pages:         []string{"abc"},
+			server:        "mailserver",
+			domain:        parser.Domain{Name: "test.com"},
+			expectedError: apperrors.ErrInvalidPageValue,
+		},
+		{
+			name:          "error - last invalid",
+			pages:         []string{"1", "2", "3", "4.4"},
+			server:        "mailserver",
+			domain:        parser.Domain{Name: "test.com"},
+			expectedError: apperrors.ErrInvalidPageValue,
+		},
+		{
+			name:          "error - negative page",
+			pages:         []string{"-1"},
+			server:        "mailserver",
+			domain:        parser.Domain{Name: "test.com"},
+			expectedError: apperrors.ErrInvalidPageValue,
+		},
+		{
+			name:          "error - zero pages (impossible)",
+			pages:         []string{"0"},
+			server:        "mailserver",
+			domain:        parser.Domain{Name: "test.com"},
+			expectedError: apperrors.ErrInvalidPageValue,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			handler := func(req *http.Request) (*http.Response, error) {
+				if req.Method != http.MethodGet {
+					t.Fatalf("expected GET method, got %v", req.Method)
+				}
+
+				t.Log(req.URL)
+
+				tmpl, err := template.New("pagination").Parse(pagesTemplate)
+				if err != nil {
+					t.Fatalf("cannot compile template: %v", err)
+				}
+
+				var buf bytes.Buffer
+				err = tmpl.Execute(&buf, tt.pages)
+				if err != nil {
+					t.Fatalf("cannot execute tamplate: %v", err)
+				}
+
+				t.Log(buf.String())
+				resp := makeResponse(http.StatusOK, buf.String(), nil)
+				return resp, nil
+			}
+
+			parser := getTestMailboxParser(handler, workers)
+			gotPages, err := parser.getPagesAmount(t.Context(), tt.server, tt.domain)
+
+			assert.ErrorIs(t, err, tt.expectedError)
+
+			if tt.expectedError == nil {
+				assert.Equal(t, gotPages, len(tt.pages))
+			}
+		})
 	}
 }
