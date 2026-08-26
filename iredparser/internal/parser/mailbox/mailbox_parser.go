@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"iredparser/internal/parser"
 	"iredparser/internal/parser/client"
+	apperrors "iredparser/pkg/errors"
 	"iredparser/pkg/utils"
 	"strconv"
 	"strings"
@@ -35,12 +36,17 @@ func (p *MailboxParser) getPagesAmount(ctx context.Context, server string, domai
 		return -1, fmt.Errorf("error while parsing pages html: %w", err)
 	}
 
-	pages := 0
-	doc.Find(".pages").Each(func(i int, selection *goquery.Selection) {
-		spans := selection.Find("a")
-		usersAmountStr := spans.Last().Text()
-		pages, _ = strconv.Atoi(usersAmountStr)
-	})
+	pagesSpan := doc.Find(".pages")
+	spans := pagesSpan.Find("a")
+	usersAmountStr := spans.Last().Text()
+	pages, err := strconv.Atoi(usersAmountStr)
+	if err != nil {
+		return -1, apperrors.ErrInvalidPageValue
+	}
+
+	if pages <= 0 {
+		return -1, apperrors.ErrInvalidPageValue.Wrap("pages amount cannt be negative or 0")
+	}
 
 	return pages, nil
 }
@@ -107,7 +113,7 @@ func (p *MailboxParser) parsePage(ctx context.Context, pageURL string) ([]*parse
 
 	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(body))
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse mailboxes pabe: %w", err)
+		return nil, fmt.Errorf("failed to parse mailboxes page: %w", err)
 	}
 
 	var parseErrors []error
