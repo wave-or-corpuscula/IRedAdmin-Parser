@@ -31,6 +31,7 @@ const (
 	ErrCodeChangePassowrd      ErrCode = 2004
 	ErrCodeInvalidMemoryValue  ErrCode = 2005
 	ErrCodeEmptyDomain         ErrCode = 2006
+	ErrCodeInvalidPageValue    ErrCode = 2007
 
 	// Authentication codes
 	ErrCodeLoginRequired        ErrCode = 3001
@@ -61,6 +62,7 @@ var (
 	ErrInvalidQuotaFormat  = New(ErrTypeParsing, ErrCodeInvalidQuotaFormat, errors.New("invalid quota format"))
 	ErrInvalidMemoryValue  = New(ErrTypeParsing, ErrCodeInvalidMemoryValue, errors.New("invalid memory value"))
 	ErrEmptyDomain         = New(ErrTypeParsing, ErrCodeEmptyDomain, errors.New("empty domain"))
+	ErrInvalidPageValue    = New(ErrTypeParsing, ErrCodeInvalidPageValue, errors.New("invalid page value"))
 
 	// Authentication errors
 	ErrLoginRequired        = New(ErrTypeAuthentication, ErrCodeLoginRequired, errors.New("login required"))
