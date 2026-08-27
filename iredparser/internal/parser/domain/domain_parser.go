@@ -55,6 +55,8 @@ func (p *DomainParser) Parse(ctx context.Context, server string) ([]*parser.Doma
 }
 
 func parseRow(row *goquery.Selection) (*parser.Domain, error) {
+	disabled := row.HasClass("disabled")
+
 	domain := strings.TrimSpace(row.Find("td").Eq(1).Text())
 	if domain == "" {
 		return nil, apperrors.ErrEmptyDomain
@@ -82,7 +84,7 @@ func parseRow(row *goquery.Selection) (*parser.Domain, error) {
 	}
 
 	domainData := parser.Domain{
-		Disabled:        false, // Fix сделать парсинг активности домена
+		Disabled:        disabled,
 		Name:            domain,
 		DisplayName:     displayName,
 		QuotaBytes:      quota,

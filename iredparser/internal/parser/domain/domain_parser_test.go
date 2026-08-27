@@ -155,9 +155,9 @@ func TestParseDomainsTable(t *testing.T) {
 			rowData: []DomainData{
 				makeDomain(false, "test_domain1", "Test Domain 1", "11 GB", "Unlimited"),
 				makeDomain(false, "test_domain2", "Test Domain 2", "11 GB", "Unlimited"),
-				makeDomain(false, "test_domain3", "Test Domain 3", "11 GB", "Unlimited"),
+				makeDomain(true, "test_domain3", "Test Domain 3", "11 GB", "Unlimited"),
 				makeDomain(false, "test_domain4", "Test Domain 4", "11 GB", "Unlimited"),
-				makeDomain(false, "test_domain5", "Test Domain 5", "11 GB", "Unlimited"),
+				makeDomain(true, "test_domain5", "Test Domain 5", "11 GB", "Unlimited"),
 			},
 			expectedCount: 5,
 			mockError:     nil,
@@ -179,9 +179,9 @@ func TestParseDomainsTable(t *testing.T) {
 			name: "error - invalid memory suffix",
 			rowData: []DomainData{
 				makeDomain(false, "", "Test Domain 1", "11 GB", "Unlimited"),
-				makeDomain(false, "test_domain4", "Test Domain 4", "11 GG", "Unlimited"),
+				makeDomain(true, "test_domain4", "Test Domain 4", "11 GG", "Unlimited"),
 				makeDomain(false, "test_domain5", "Test Domain 5", "abc GB", "Unlimited"),
-				makeDomain(false, "test_domain6", "Test Domain 6", "Unlimited", "Unlimited"),
+				makeDomain(true, "test_domain6", "Test Domain 6", "Unlimited", "Unlimited"),
 			},
 			expectedCount: 0,
 			mockError:     nil,
@@ -190,8 +190,8 @@ func TestParseDomainsTable(t *testing.T) {
 		{
 			name: "error - invalid memory value",
 			rowData: []DomainData{
-				makeDomain(false, "", "Test Domain 1", "11 GB", "Unlimited"),
-				makeDomain(false, "test_domain4", "Test Domain 4", "11 GG", "Unlimited"),
+				makeDomain(true, "", "Test Domain 1", "11 GB", "Unlimited"),
+				makeDomain(true, "test_domain4", "Test Domain 4", "11 GG", "Unlimited"),
 				makeDomain(false, "test_domain5", "Test Domain 5", "abc GB", "Unlimited"),
 				makeDomain(false, "test_domain6", "Test Domain 6", "Unlimited", "Unlimited"),
 			},
@@ -247,7 +247,6 @@ func TestParseDomainsTable(t *testing.T) {
 					assert.True(t, ok)
 				}
 			}
-			t.Log(domains)
 		})
 	}
 }
