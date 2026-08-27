@@ -4,7 +4,6 @@ package domainparser
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"iredparser/internal/parser"
 	"iredparser/internal/parser/client"
@@ -24,7 +23,7 @@ func NewDomainParser(client *client.Client) *DomainParser {
 	return &DomainParser{client: client}
 }
 
-func (p *DomainParser) Parse(ctx context.Context, server string) ([]*parser.Domain, error) {
+func (p *DomainParser) Parse(ctx context.Context, server string) (*parser.ParseDomainResult, error) {
 	body, err := p.client.GetFromServer(ctx, server, parser.DomainsListPath)
 	if err != nil {
 		return nil, fmt.Errorf("domains parser: failed to parse domains: %w", err)
@@ -38,7 +37,8 @@ func (p *DomainParser) Parse(ctx context.Context, server string) ([]*parser.Doma
 	var domains []*parser.Domain
 	var parseErrors []error
 
-	doc.Find("tbody tr").Each(func(_ int, row *goquery.Selection) {
+	rows := doc.Find("tbody tr")
+	rows.Each(func(_ int, row *goquery.Selection) {
 		domain, err := parseRow(row)
 		if err != nil {
 			parseErrors = append(parseErrors, err)
@@ -48,11 +48,13 @@ func (p *DomainParser) Parse(ctx context.Context, server string) ([]*parser.Doma
 		domains = append(domains, domain)
 	})
 
-	if len(parseErrors) > 0 {
-		return nil, errors.Join(parseErrors...)
+	result := &parser.ParseDomainResult{
+		Domains: domains,
+		Total:   rows.Length(),
+		Errors:  parseErrors,
 	}
 
-	return domains, nil
+	return result, nil
 }
 
 func parseRow(row *goquery.Selection) (*parser.Domain, error) {
