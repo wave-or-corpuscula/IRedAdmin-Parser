@@ -4,6 +4,7 @@ package errors
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -32,6 +33,8 @@ const (
 	ErrCodeInvalidMemoryValue  ErrCode = 2005
 	ErrCodeEmptyDomain         ErrCode = 2006
 	ErrCodeInvalidPageValue    ErrCode = 2007
+	ErrCodeEmptyMailAddress    ErrCode = 2008
+	ErrCodeDomainParsing       ErrCode = 2009
 
 	// Authentication codes
 	ErrCodeLoginRequired        ErrCode = 3001
@@ -63,6 +66,8 @@ var (
 	ErrInvalidMemoryValue  = New(ErrTypeParsing, ErrCodeInvalidMemoryValue, errors.New("invalid memory value"))
 	ErrEmptyDomain         = New(ErrTypeParsing, ErrCodeEmptyDomain, errors.New("empty domain"))
 	ErrInvalidPageValue    = New(ErrTypeParsing, ErrCodeInvalidPageValue, errors.New("invalid page value"))
+	ErrEmptyMailAddress    = New(ErrTypeParsing, ErrCodeEmptyMailAddress, errors.New("empty mail address"))
+	ErrDomainParsing       = New(ErrTypeParsing, ErrCodeDomainParsing, errors.New("error while parsing domain"))
 
 	// Authentication errors
 	ErrLoginRequired        = New(ErrTypeAuthentication, ErrCodeLoginRequired, errors.New("login required"))
@@ -148,21 +153,53 @@ func IsType(err error, errType ErrType) bool {
 	return false
 }
 
-type IRedMultiError []error
+type IRedMultiError struct {
+	Errors []error
+}
 
-func (m IRedMultiError) Error() string {
-	if len(m) == 0 {
+func NewMultiError(errors []error) *IRedMultiError {
+	return &IRedMultiError{Errors: errors}
+}
+
+func (m *IRedMultiError) Error() string {
+	if len(m.Errors) == 0 {
 		return ""
 	}
 
-	msgs := make([]string, len(m))
-	for i, err := range m {
+	msgs := make([]string, len(m.Errors))
+	for i, err := range m.Errors {
 		msgs[i] = err.Error()
 	}
 
 	return strings.Join(msgs, "; ")
 }
 
-func (m IRedMultiError) Unwrap() []error {
-	return []error(m)
+func (m *IRedMultiError) Append(err error) {
+	if err != nil {
+		m.Errors = append(m.Errors, err)
+	}
+}
+
+func (m *IRedMultiError) Unwrap() []error {
+	return m.Errors
+}
+
+func (m *IRedMultiError) Has(target error) bool {
+	if target == nil {
+		return len(m.Errors) == 0
+	}
+
+	for _, err := range m.Errors {
+		if errors.Is(err, target) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (m *IRedMultiError) HasAny(targets ...error) bool {
+	return slices.ContainsFunc(targets, func(target error) bool {
+		return m.Has(target)
+	})
 }
