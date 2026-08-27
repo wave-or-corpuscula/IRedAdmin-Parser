@@ -24,15 +24,17 @@ type DomainData struct {
 	DisplayName string
 	UsedMemory  string
 	Quota       string
+	UsersAmount int
 }
 
-func makeDomain(disabled bool, name string, displayName string, usedMemory string, quota string) DomainData {
+func makeDomain(disabled bool, name string, displayName string, usedMemory string, quota string, usersAmount int) DomainData {
 	return DomainData{
 		Disabled:    disabled,
 		Name:        name,
 		DisplayName: displayName,
 		UsedMemory:  usedMemory,
 		Quota:       quota,
+		UsersAmount: usersAmount,
 	}
 }
 
@@ -89,7 +91,7 @@ const domainTemplate = `
 					<span class="color-grey">{{ .UsedMemory }}</span> / {{ .Quota }}
 			</td>
 			<td class="vcenter" data-sort-value="0">
-					<a href="/iredadmin/users/{{ .Name }}" style="text-decoration: none; display: block; padding: 0 10px 0 10px;">20</a>
+					<a href="/iredadmin/users/{{ .Name }}" style="text-decoration: none; display: block; padding: 0 10px 0 10px;">{{ .UsersAmount }}</a>
 			</td>
 		</tr>
 	 {{ end }}
@@ -145,7 +147,7 @@ func TestParseDomainsTable(t *testing.T) {
 	}{
 		{
 			name:          "success - valid row",
-			rowData:       []DomainData{makeDomain(false, "test_domain", "Test Domain", "11 GB", "Unlimited")},
+			rowData:       []DomainData{makeDomain(false, "test_domain", "Test Domain", "11 GB", "Unlimited", 10)},
 			expectedCount: 1,
 			mockError:     nil,
 			expectedError: nil,
@@ -153,11 +155,11 @@ func TestParseDomainsTable(t *testing.T) {
 		{
 			name: "success - valid rows",
 			rowData: []DomainData{
-				makeDomain(false, "test_domain1", "Test Domain 1", "11 GB", "Unlimited"),
-				makeDomain(false, "test_domain2", "Test Domain 2", "11 GB", "Unlimited"),
-				makeDomain(true, "test_domain3", "Test Domain 3", "11 GB", "Unlimited"),
-				makeDomain(false, "test_domain4", "Test Domain 4", "11 GB", "Unlimited"),
-				makeDomain(true, "test_domain5", "Test Domain 5", "11 GB", "Unlimited"),
+				makeDomain(false, "test_domain1", "Test Domain 1", "11 GB", "Unlimited", 24),
+				makeDomain(false, "test_domain2", "Test Domain 2", "11 GB", "Unlimited", 24),
+				makeDomain(true, "test_domain3", "Test Domain 3", "11 GB", "Unlimited", 24),
+				makeDomain(false, "test_domain4", "Test Domain 4", "11 GB", "Unlimited", 24),
+				makeDomain(true, "test_domain5", "Test Domain 5", "11 GB", "Unlimited", 24),
 			},
 			expectedCount: 5,
 			mockError:     nil,
@@ -166,10 +168,10 @@ func TestParseDomainsTable(t *testing.T) {
 		{
 			name: "error - empty domain",
 			rowData: []DomainData{
-				makeDomain(false, "", "Test Domain 1", "11 GB", "Unlimited"),
-				makeDomain(false, "test_domain4", "Test Domain 4", "11 GG", "Unlimited"),
-				makeDomain(false, "test_domain5", "Test Domain 5", "abc GB", "Unlimited"),
-				makeDomain(false, "test_domain6", "Test Domain 6", "Unlimited", "Unlimited"),
+				makeDomain(false, "", "Test Domain 1", "11 GB", "Unlimited", 23),
+				makeDomain(false, "test_domain4", "Test Domain 4", "11 GG", "Unlimited", 23),
+				makeDomain(false, "test_domain5", "Test Domain 5", "abc GB", "Unlimited", 23),
+				makeDomain(false, "test_domain6", "Test Domain 6", "Unlimited", "Unlimited", 23),
 			},
 			expectedCount: 0,
 			mockError:     nil,
@@ -178,10 +180,10 @@ func TestParseDomainsTable(t *testing.T) {
 		{
 			name: "error - invalid memory suffix",
 			rowData: []DomainData{
-				makeDomain(false, "", "Test Domain 1", "11 GB", "Unlimited"),
-				makeDomain(true, "test_domain4", "Test Domain 4", "11 GG", "Unlimited"),
-				makeDomain(false, "test_domain5", "Test Domain 5", "abc GB", "Unlimited"),
-				makeDomain(true, "test_domain6", "Test Domain 6", "Unlimited", "Unlimited"),
+				makeDomain(false, "", "Test Domain 1", "11 GB", "Unlimited", 22),
+				makeDomain(true, "test_domain4", "Test Domain 4", "11 GG", "Unlimited", 22),
+				makeDomain(false, "test_domain5", "Test Domain 5", "abc GB", "Unlimited", 22),
+				makeDomain(true, "test_domain6", "Test Domain 6", "Unlimited", "Unlimited", 22),
 			},
 			expectedCount: 0,
 			mockError:     nil,
@@ -190,10 +192,10 @@ func TestParseDomainsTable(t *testing.T) {
 		{
 			name: "error - invalid memory value",
 			rowData: []DomainData{
-				makeDomain(true, "", "Test Domain 1", "11 GB", "Unlimited"),
-				makeDomain(true, "test_domain4", "Test Domain 4", "11 GG", "Unlimited"),
-				makeDomain(false, "test_domain5", "Test Domain 5", "abc GB", "Unlimited"),
-				makeDomain(false, "test_domain6", "Test Domain 6", "Unlimited", "Unlimited"),
+				makeDomain(true, "", "Test Domain 1", "11 GB", "Unlimited", 27),
+				makeDomain(true, "test_domain4", "Test Domain 4", "11 GG", "Unlimited", 27),
+				makeDomain(false, "test_domain5", "Test Domain 5", "abc GB", "Unlimited", 27),
+				makeDomain(false, "test_domain6", "Test Domain 6", "Unlimited", "Unlimited", 27),
 			},
 			expectedCount: 0,
 			mockError:     nil,
@@ -259,47 +261,47 @@ func TestParseRow(t *testing.T) {
 	}{
 		{
 			name:          "success - valid row",
-			rowData:       []DomainData{makeDomain(false, "test_domain", "Test Domain", "11 GB", "Unlimited")},
+			rowData:       []DomainData{makeDomain(false, "test_domain", "Test Domain", "11 GB", "Unlimited", 10)},
 			expectedError: nil,
 		},
 		{
 			name:          "success - valid row, zero quota/used",
-			rowData:       []DomainData{makeDomain(false, "test_domain", "Test Domain", "0", "0")},
+			rowData:       []DomainData{makeDomain(false, "test_domain", "Test Domain", "0", "0", 11)},
 			expectedError: nil,
 		},
 		{
 			name:          "success - valid row, empty display name",
-			rowData:       []DomainData{makeDomain(false, "", "", "11 GB", "Unlimited")},
+			rowData:       []DomainData{makeDomain(false, "", "", "11 GB", "Unlimited", 24)},
 			expectedError: apperrors.ErrEmptyDomain,
 		},
 		{
 			name:          "error - invalid memory suffix",
-			rowData:       []DomainData{makeDomain(false, "test_domain", "Test Domain", "11 GG", "Unlimited")},
+			rowData:       []DomainData{makeDomain(false, "test_domain", "Test Domain", "11 GG", "Unlimited", 12)},
 			expectedError: apperrors.ErrInvalidMemorySuffix,
 		},
 		{
 			name:          "error - invalid memory value (letters)",
-			rowData:       []DomainData{makeDomain(false, "test_domain", "Test Domain", "abc GB", "Unlimited")},
+			rowData:       []DomainData{makeDomain(false, "test_domain", "Test Domain", "abc GB", "Unlimited", 20)},
 			expectedError: apperrors.ErrInvalidMemoryValue,
 		},
 		{
 			name:          "error - invalid memory value (invalid float)",
-			rowData:       []DomainData{makeDomain(false, "test_domain", "Test Domain", "10,2 GB", "Unlimited")},
+			rowData:       []DomainData{makeDomain(false, "test_domain", "Test Domain", "10,2 GB", "Unlimited", 23)},
 			expectedError: apperrors.ErrInvalidMemoryValue,
 		},
 		{
 			name:          "error - invalid memory value (unlimited quota)",
-			rowData:       []DomainData{makeDomain(false, "test_domain", "Test Domain", "Unlimited", "Unlimited")},
+			rowData:       []DomainData{makeDomain(false, "test_domain", "Test Domain", "Unlimited", "Unlimited", 23)},
 			expectedError: apperrors.ErrInvalidMemoryValue,
 		},
 		{
 			name:          "error - invalid memory value (negative memory)",
-			rowData:       []DomainData{makeDomain(false, "test_domain", "Test Domain", "-1 GB", "Unlimited")},
+			rowData:       []DomainData{makeDomain(false, "test_domain", "Test Domain", "-1 GB", "Unlimited", 23)},
 			expectedError: apperrors.ErrInvalidMemoryValue,
 		},
 		{
 			name:          "error - invalid unlimited value",
-			rowData:       []DomainData{makeDomain(false, "test_domain", "Test Domain", "1 GB", "Unlimited invalid")},
+			rowData:       []DomainData{makeDomain(false, "test_domain", "Test Domain", "1 GB", "Unlimited invalid", 23)},
 			expectedError: apperrors.ErrInvalidMemorySuffix,
 		},
 	}

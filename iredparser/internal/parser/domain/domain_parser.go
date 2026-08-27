@@ -10,6 +10,7 @@ import (
 	"iredparser/internal/parser/client"
 	apperrors "iredparser/pkg/errors"
 	"iredparser/pkg/utils"
+	"strconv"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -83,12 +84,19 @@ func parseRow(row *goquery.Selection) (*parser.Domain, error) {
 		return nil, err
 	}
 
+	users := strings.TrimSpace(row.Find("td").Last().Text())
+	usersAmount, err := strconv.Atoi(users)
+	if err != nil || usersAmount < 0 {
+		return nil, apperrors.ErrDomainParsing.Wrapf("invalid users amount: %q", users)
+	}
+
 	domainData := parser.Domain{
 		Disabled:        disabled,
 		Name:            domain,
 		DisplayName:     displayName,
 		QuotaBytes:      quota,
 		UsedMemoryBytes: usedMemory,
+		UsersAmount:     usersAmount,
 	}
 
 	return &domainData, nil
