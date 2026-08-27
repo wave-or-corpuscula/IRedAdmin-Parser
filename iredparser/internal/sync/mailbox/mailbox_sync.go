@@ -7,6 +7,7 @@ import (
 	"iredparser/internal/parser"
 
 	mailboxparser "iredparser/internal/parser/mailbox"
+	apperrors "iredparser/pkg/errors"
 )
 
 type MailboxStorage interface {
@@ -26,7 +27,7 @@ func NewMailboxSyncService(parser *mailboxparser.MailboxParser, storage MailboxS
 }
 
 func (s *MailboxSyncService) Sync(ctx context.Context, server *database.ServerModel, domain *database.DomainModel) ([]*database.MailboxModel, error) {
-	mailboxes, err := s.mailboxParser.Parse(ctx, server.Name, domain.Domain)
+	results, err := s.mailboxParser.Parse(ctx, server.Name, domain.Domain)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to parse mailboxes for domain %q: %w",
@@ -35,7 +36,11 @@ func (s *MailboxSyncService) Sync(ctx context.Context, server *database.ServerMo
 		)
 	}
 
-	mailboxModels, err := s.storage.UpsertMailboxMany(mailboxes, domain.ID)
+	if len(results.Errors) > 0 {
+		return nil, apperrors.NewMultiError(results.Errors)
+	}
+
+	mailboxModels, err := s.storage.UpsertMailboxMany(results.Mailboxes, domain.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error while mailbox syncing: %w", err)
 	}
