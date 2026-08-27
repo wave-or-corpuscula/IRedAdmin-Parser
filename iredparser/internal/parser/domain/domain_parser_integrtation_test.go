@@ -22,9 +22,10 @@ func TestParseDomains(t *testing.T) {
 
 		parser := NewDomainParser(c)
 
-		domains, err := parser.Parse(t.Context(), config.Server)
+		result, err := parser.Parse(t.Context(), config.Server)
 		assert.NoError(t, err)
+		assert.Len(t, result.Errors, 0)
 
-		t.Logf("got %d domains from %s\n", len(domains), config.Server)
+		t.Logf("got %d domains from %s\n", len(result.Domains), config.Server)
 	}
 }

@@ -144,6 +144,7 @@ func TestParseDomainsTable(t *testing.T) {
 		mockResonse   *http.Response
 		mockError     error
 		expectedError error
+		parsingError  error
 	}{
 		{
 			name:          "success - valid row",
@@ -151,6 +152,7 @@ func TestParseDomainsTable(t *testing.T) {
 			expectedCount: 1,
 			mockError:     nil,
 			expectedError: nil,
+			parsingError:  nil,
 		},
 		{
 			name: "success - valid rows",
@@ -164,6 +166,7 @@ func TestParseDomainsTable(t *testing.T) {
 			expectedCount: 5,
 			mockError:     nil,
 			expectedError: nil,
+			parsingError:  nil,
 		},
 		{
 			name: "error - empty domain",
@@ -175,7 +178,8 @@ func TestParseDomainsTable(t *testing.T) {
 			},
 			expectedCount: 0,
 			mockError:     nil,
-			expectedError: apperrors.ErrEmptyDomain,
+			expectedError: nil,
+			parsingError:  apperrors.ErrEmptyDomain,
 		},
 		{
 			name: "error - invalid memory suffix",
@@ -187,7 +191,8 @@ func TestParseDomainsTable(t *testing.T) {
 			},
 			expectedCount: 0,
 			mockError:     nil,
-			expectedError: apperrors.ErrInvalidMemorySuffix,
+			expectedError: nil,
+			parsingError:  apperrors.ErrInvalidMemorySuffix,
 		},
 		{
 			name: "error - invalid memory value",
@@ -199,7 +204,8 @@ func TestParseDomainsTable(t *testing.T) {
 			},
 			expectedCount: 0,
 			mockError:     nil,
-			expectedError: apperrors.ErrInvalidMemoryValue,
+			expectedError: nil,
+			parsingError:  apperrors.ErrInvalidMemoryValue,
 		},
 		{
 			name:          "error - get request",
@@ -207,6 +213,7 @@ func TestParseDomainsTable(t *testing.T) {
 			expectedCount: 0,
 			mockError:     errors.New("some http error"),
 			expectedError: apperrors.ErrGetRequestFailed,
+			parsingError:  nil,
 		},
 		{
 			name:          "error - empty table",
@@ -214,6 +221,7 @@ func TestParseDomainsTable(t *testing.T) {
 			expectedCount: 0,
 			mockError:     nil,
 			expectedError: nil,
+			parsingError:  nil,
 		},
 	}
 
@@ -227,6 +235,10 @@ func TestParseDomainsTable(t *testing.T) {
 			handler := func(r *http.Request) (*http.Response, error) {
 				assert.Equal(t, http.MethodGet, r.Method)
 
+				if tt.mockError != nil {
+					return nil, tt.mockError
+				}
+
 				var result bytes.Buffer
 				err = tmpl.Execute(&result, tt.rowData)
 				assert.NoError(t, err)
@@ -236,11 +248,18 @@ func TestParseDomainsTable(t *testing.T) {
 			}
 
 			domainParser := newTestDomainParser(handler)
-			domains, err := domainParser.Parse(t.Context(), "test_server")
-
+			result, err := domainParser.Parse(t.Context(), "test_server")
 			assert.ErrorIs(t, err, tt.expectedError)
 
-			if tt.expectedError == nil {
+			if tt.expectedError != nil {
+				return
+			}
+
+			parseErrors := apperrors.NewMultiError(result.Errors)
+			assert.True(t, parseErrors.Has(tt.parsingError))
+
+			if tt.parsingError == nil {
+				domains := result.Domains
 				assert.Len(t, domains, tt.expectedCount)
 
 				for i := range len(domains) {
