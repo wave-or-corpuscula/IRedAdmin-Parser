@@ -101,7 +101,7 @@ func (c *Client) AuthServerURL(ctx context.Context, loginURL string, login strin
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return apperrors.ErrPostRequestFailed
+		return apperrors.ErrStatusCodeNotOK.Wrapf("received status: %d", resp.StatusCode)
 	}
 
 	err = utils.ExtractLoginError(resp.Body)
