@@ -143,7 +143,7 @@ func ExtractChangePasswordErrors(body io.ReadCloser) error {
 	})
 
 	if len(errs) != 0 {
-		return apperrors.IRedMultiError(errs)
+		return apperrors.NewMultiError(errs)
 	}
 
 	return nil
