@@ -24,6 +24,7 @@ const (
 	ErrCodeGetRequestFailed     ErrCode = 1004
 	ErrCodeFailedCaptureCookie  ErrCode = 1005
 	ErrCodeUnexpectedStatusCode ErrCode = 1006
+	ErrCodeStatusCodeNotOK      ErrCode = 1007
 
 	// Parsig codes
 	ErrCodeInvalidMemorySuffix ErrCode = 2001
@@ -58,6 +59,7 @@ var (
 	ErrFailedCaptureCookie  = New(ErrTypeHTTP, ErrCodeFailedCaptureCookie, errors.New("could not capture cookie"))
 	ErrInternalServerError  = New(ErrTypeHTTP, ErrCodeInternalServerError, errors.New("internal server error"))
 	ErrUnexpectedStatusCode = New(ErrTypeHTTP, ErrCodeUnexpectedStatusCode, errors.New("unexpected status code"))
+	ErrStatusCodeNotOK      = New(ErrTypeHTTP, ErrCodeStatusCodeNotOK, errors.New("status code not OK"))
 
 	// Parsing errors
 	ErrInvalidMemorySuffix = New(ErrTypeParsing, ErrCodeInvalidMemorySuffix, errors.New("invalid memory size suffix"))
