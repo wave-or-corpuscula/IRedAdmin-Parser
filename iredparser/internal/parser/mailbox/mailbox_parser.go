@@ -9,6 +9,7 @@ import (
 	"iredparser/internal/parser/client"
 	apperrors "iredparser/pkg/errors"
 	"iredparser/pkg/utils"
+	"log"
 	"strconv"
 	"strings"
 	"sync"
@@ -51,7 +52,7 @@ func (p *MailboxParser) getPagesAmount(ctx context.Context, server string, domai
 	return pages, nil
 }
 
-func (p *MailboxParser) Parse(ctx context.Context, server string, domain parser.Domain) ([]*parser.Mailbox, error) {
+func (p *MailboxParser) Parse(ctx context.Context, server string, domain parser.Domain) (*parser.ParseMailboxesResult, error) {
 	pages, err := p.getPagesAmount(ctx, server, domain)
 	if err != nil {
 		return nil, err
@@ -60,24 +61,26 @@ func (p *MailboxParser) Parse(ctx context.Context, server string, domain parser.
 	return p.parsePages(ctx, server, domain, pages)
 }
 
-func (p *MailboxParser) parsePages(ctx context.Context, server string, domain parser.Domain, pages int) ([]*parser.Mailbox, error) {
+func (p *MailboxParser) parsePages(ctx context.Context, server string, domain parser.Domain, pages int) (*parser.ParseMailboxesResult, error) {
 	jobs := make(chan string)
-	results := make(chan []*parser.Mailbox)
+	resultsCh := make(chan *parser.ParseMailboxesResult)
 
 	var wg sync.WaitGroup
+	var workerErrors []error
 
 	for i := 0; i < p.workers; i++ {
 		wg.Go(func() {
 			for pageURL := range jobs {
-				boxes, err := p.parsePage(
+				result, err := p.parsePage(
 					ctx,
 					pageURL,
 				)
 				if err != nil {
-					continue // TODO: Logging parsing errors
+					workerErrors = append(workerErrors, err)
+					return
 				}
 
-				results <- boxes
+				resultsCh <- result
 			}
 		})
 	}
@@ -93,19 +96,23 @@ func (p *MailboxParser) parsePages(ctx context.Context, server string, domain pa
 
 	go func() {
 		wg.Wait()
-		close(results)
+		close(resultsCh)
 	}()
 
-	var mailboxes []*parser.Mailbox
+	results := &parser.ParseMailboxesResult{}
 
-	for boxes := range results {
-		mailboxes = append(mailboxes, boxes...)
+	for res := range resultsCh {
+		results.Extend(res)
 	}
 
-	return mailboxes, nil
+	if len(workerErrors) != 0 {
+		return nil, apperrors.NewMultiError(workerErrors)
+	}
+
+	return results, nil
 }
 
-func (p *MailboxParser) parsePage(ctx context.Context, pageURL string) ([]*parser.Mailbox, error) {
+func (p *MailboxParser) parsePage(ctx context.Context, pageURL string) (*parser.ParseMailboxesResult, error) {
 	body, err := p.client.Get(ctx, pageURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get mailboxes page: %w", err)
@@ -116,12 +123,14 @@ func (p *MailboxParser) parsePage(ctx context.Context, pageURL string) ([]*parse
 		return nil, fmt.Errorf("failed to parse mailboxes page: %w", err)
 	}
 
-	var parseErrors []error
 	var mailboxes []*parser.Mailbox
+	var parseErrors []error
+	rows := doc.Find("tbody tr")
 
-	doc.Find("tbody tr").Each(func(_ int, row *goquery.Selection) {
+	rows.Each(func(i int, row *goquery.Selection) {
 		mailbox, err := p.parsePageMailboxes(row)
 		if err != nil {
+			log.Println("error in", pageURL, "in position:", i)
 			parseErrors = append(parseErrors, err)
 			return
 		}
@@ -129,12 +138,22 @@ func (p *MailboxParser) parsePage(ctx context.Context, pageURL string) ([]*parse
 		mailboxes = append(mailboxes, mailbox)
 	})
 
-	return mailboxes, nil
+	result := &parser.ParseMailboxesResult{
+		Mailboxes: mailboxes,
+		Total:     rows.Length(),
+		Errors:    parseErrors,
+	}
+
+	return result, nil
 }
 
 func (p *MailboxParser) parsePageMailboxes(row *goquery.Selection) (*parser.Mailbox, error) {
 	displayName := strings.TrimSpace(row.Find("td").Eq(1).Text())
-	mailAddress := strings.TrimSpace(row.Find("td").Eq(2).Text())
+	mailAddress := strings.TrimSpace(row.Find("td").Eq(0).Find("input[name='mail']").AttrOr("value", ""))
+
+	if len(mailAddress) == 0 {
+		return nil, apperrors.ErrEmptyMailAddress
+	}
 
 	quotaField := strings.TrimSpace(row.Find("td").Eq(5).Find(".color-grey a").Text())
 	if len(quotaField) == 0 {
@@ -146,13 +165,13 @@ func (p *MailboxParser) parsePageMailboxes(row *goquery.Selection) (*parser.Mail
 
 	usedQuota := strings.Split(quotaField, "/")
 	if len(usedQuota) != 2 {
-		return nil, fmt.Errorf("invalid quota field: %q, %s", quotaField, mailAddress)
+		return nil, apperrors.ErrInvalidQuotaFormat.Wrapf("%q, %s", quotaField, mailAddress)
 	}
 	usedMemoryWithSuffix, quotaWithSuffix := strings.TrimSpace(usedQuota[0]), strings.TrimSpace(usedQuota[1])
 
 	usedMemory, err := utils.GetMemoryBytes(usedMemoryWithSuffix)
 	if err != nil {
-		return nil, fmt.Errorf("invalid used memory value: %s", usedMemoryWithSuffix)
+		return nil, apperrors.ErrInvalidMemoryValue.Wrapf("%q", usedMemoryWithSuffix)
 	}
 
 	quota, err := utils.GetMemoryBytes(quotaWithSuffix)
