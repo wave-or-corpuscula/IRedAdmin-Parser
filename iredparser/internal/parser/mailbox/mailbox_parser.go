@@ -9,7 +9,6 @@ import (
 	"iredparser/internal/parser/client"
 	apperrors "iredparser/pkg/errors"
 	"iredparser/pkg/utils"
-	"log"
 	"strconv"
 	"strings"
 	"sync"
@@ -130,7 +129,6 @@ func (p *MailboxParser) parsePage(ctx context.Context, pageURL string) (*parser.
 	rows.Each(func(i int, row *goquery.Selection) {
 		mailbox, err := p.parsePageMailboxes(row)
 		if err != nil {
-			log.Println("error in", pageURL, "in position:", i)
 			parseErrors = append(parseErrors, err)
 			return
 		}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"iredparser/internal/database"
 	"iredparser/internal/parser"
+	"log/slog"
 
 	mailboxparser "iredparser/internal/parser/mailbox"
 	apperrors "iredparser/pkg/errors"
@@ -33,6 +34,15 @@ func (s *MailboxSyncService) Sync(ctx context.Context, server *database.ServerMo
 			"failed to parse mailboxes for domain %q: %w",
 			domain.Name,
 			err,
+		)
+	}
+
+	for _, err := range results.Errors {
+		slog.Error(
+			"mailbox parse error",
+			"server", server.Name,
+			"domain", domain.Name,
+			"error", err,
 		)
 	}
 
