@@ -29,7 +29,7 @@ const (
 	// Parsig codes
 	ErrCodeInvalidMemorySuffix ErrCode = 2001
 	ErrCodeInvalidQuotaFormat  ErrCode = 2002
-	ErrCodeCannoFinsCSRFToken  ErrCode = 2003
+	ErrCodeCannotFinsCSRFToken ErrCode = 2003
 	ErrCodeChangePassowrd      ErrCode = 2004
 	ErrCodeInvalidMemoryValue  ErrCode = 2005
 	ErrCodeEmptyDomain         ErrCode = 2006
@@ -63,7 +63,7 @@ var (
 
 	// Parsing errors
 	ErrInvalidMemorySuffix = New(ErrTypeParsing, ErrCodeInvalidMemorySuffix, errors.New("invalid memory size suffix"))
-	ErrCannoFindCSRFToken  = New(ErrTypeParsing, ErrCodeCannoFinsCSRFToken, errors.New("cannot find csrf token"))
+	ErrCannotFindCSRFToken = New(ErrTypeParsing, ErrCodeCannotFinsCSRFToken, errors.New("cannot find csrf token"))
 	ErrInvalidQuotaFormat  = New(ErrTypeParsing, ErrCodeInvalidQuotaFormat, errors.New("invalid quota format"))
 	ErrInvalidMemoryValue  = New(ErrTypeParsing, ErrCodeInvalidMemoryValue, errors.New("invalid memory value"))
 	ErrEmptyDomain         = New(ErrTypeParsing, ErrCodeEmptyDomain, errors.New("empty domain"))

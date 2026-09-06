@@ -161,7 +161,7 @@ func ExtractCSRFToken(body []byte) (string, error) {
 
 	token, ok := doc.Find("input[name='csrf_token']").Attr("value")
 	if !ok {
-		return "", apperrors.ErrCannoFindCSRFToken
+		return "", apperrors.ErrCannotFindCSRFToken
 	}
 
 	return token, nil

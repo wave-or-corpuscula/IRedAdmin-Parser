@@ -275,7 +275,7 @@ func TestGetCsrfToken(t *testing.T) {
 			),
 			expectedToken: "",
 			mockError:     nil,
-			expectedError: apperrors.ErrCannoFindCSRFToken,
+			expectedError: apperrors.ErrCannotFindCSRFToken,
 		},
 		{
 			name:          "error - get fails",
@@ -358,7 +358,7 @@ func TestChangePasswordUnit(t *testing.T) {
 					Error:    nil,
 				},
 			},
-			expectedError: fmt.Errorf("client: failed to get CSRF token: %w", apperrors.ErrCannoFindCSRFToken),
+			expectedError: fmt.Errorf("client: failed to get CSRF token: %w", apperrors.ErrCannotFindCSRFToken),
 		},
 		{
 			name:        "change password - HTTP error 500",
