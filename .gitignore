@@ -27,6 +27,9 @@ iredparser/bin/
 .DS_Store
 Thumbs.db
 
+# Code reviews
+review/
+
 # Project-specific
 sync.sh
 todo.md
