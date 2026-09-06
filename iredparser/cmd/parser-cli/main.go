@@ -6,6 +6,7 @@ import (
 	"iredparser/internal/database"
 	"iredparser/internal/parser/client"
 	"log"
+	"log/slog"
 	"os"
 
 	domainparser "iredparser/internal/parser/domain"
@@ -19,6 +20,8 @@ import (
 )
 
 func main() {
+	initLogger()
+
 	httpClient, err := client.NewClient()
 	if err != nil {
 		log.Fatalln(err)
@@ -59,4 +62,21 @@ func main() {
 			)
 		}
 	}
+}
+
+func initLogger() {
+	file, err := os.OpenFile("logs/backend.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		return
+	}
+	defer file.Close()
+
+	handler := slog.NewJSONHandler(
+		file,
+		&slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		},
+	)
+	logger := slog.New(handler)
+	slog.SetDefault(logger)
 }
