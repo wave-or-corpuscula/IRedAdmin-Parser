@@ -7,7 +7,6 @@ import (
 	"iredparser/internal/parser"
 	"log/slog"
 
-	mailboxparser "iredparser/internal/parser/mailbox"
 	apperrors "iredparser/pkg/errors"
 )
 
@@ -15,12 +14,16 @@ type MailboxStorage interface {
 	UpsertMailboxMany(mailboxes []*parser.Mailbox, DomainID int64) ([]*database.MailboxModel, error)
 }
 
+type MailboxParser interface {
+	Parse(ctx context.Context, server string, domain parser.Domain) (*parser.ParseMailboxesResult, error)
+}
+
 type MailboxSyncService struct {
-	mailboxParser *mailboxparser.MailboxParser
+	mailboxParser MailboxParser
 	storage       MailboxStorage
 }
 
-func NewMailboxSyncService(parser *mailboxparser.MailboxParser, storage MailboxStorage) *MailboxSyncService {
+func NewMailboxSyncService(parser MailboxParser, storage MailboxStorage) *MailboxSyncService {
 	return &MailboxSyncService{
 		mailboxParser: parser,
 		storage:       storage,
