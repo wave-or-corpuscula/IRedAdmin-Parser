@@ -4,7 +4,6 @@ package database
 import (
 	"fmt"
 	"iredparser/internal/parser"
-	"log"
 
 	"github.com/jmoiron/sqlx"
 
@@ -86,7 +85,6 @@ func (d *Database) initSchema() error {
 	`
 
 	_, err := d.db.Exec(schema)
-	log.Println(err)
 	return err
 }
 
