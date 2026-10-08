@@ -7,7 +7,6 @@ import (
 	"iredparser/internal/database"
 	"iredparser/internal/parser"
 
-	domainparser "iredparser/internal/parser/domain"
 	apperrors "iredparser/pkg/errors"
 )
 
@@ -15,12 +14,16 @@ type DomainStorage interface {
 	UpsertDomainMany(domains []*parser.Domain, serverID int64) ([]*database.DomainModel, error)
 }
 
+type DomainParser interface {
+	Parse(ctx context.Context, server string) (*parser.ParseDomainResult, error)
+}
+
 type DomainSyncService struct {
-	domainParser *domainparser.DomainParser
+	domainParser DomainParser
 	storage      DomainStorage
 }
 
-func NewDomainSyncService(parser *domainparser.DomainParser, storage DomainStorage) *DomainSyncService {
+func NewDomainSyncService(parser DomainParser, storage DomainStorage) *DomainSyncService {
 	return &DomainSyncService{
 		domainParser: parser,
 		storage:      storage,
