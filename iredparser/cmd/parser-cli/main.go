@@ -65,11 +65,14 @@ func main() {
 }
 
 func initLogger() {
-	file, err := os.OpenFile("logs/backend.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	file, err := os.OpenFile(
+		"logs/backend.log",
+		os.O_CREATE|os.O_WRONLY|os.O_APPEND,
+		0644,
+	)
 	if err != nil {
-		return
+		log.Fatal(err)
 	}
-	defer file.Close()
 
 	handler := slog.NewJSONHandler(
 		file,
