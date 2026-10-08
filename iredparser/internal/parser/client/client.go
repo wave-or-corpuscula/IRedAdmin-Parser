@@ -64,9 +64,6 @@ func NewClient() (*Client, error) {
 	return &Client{httpClient: client}, nil
 }
 
-func (c *Client) ConfigureClient(config common.ServerConfig) {
-}
-
 func (c *Client) AuthServer(ctx context.Context, server string, login string, password string) error {
 	baseURL := parser.CreateBaseURL(server)
 	loginURL := baseURL + parser.LoginPath
