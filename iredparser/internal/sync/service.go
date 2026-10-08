@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"iredparser/internal/database"
+	"log/slog"
 	"sync"
 )
 
@@ -29,8 +30,15 @@ func NewSyncService(mailSync MailSyncServiceType, domainSync DomainSyncServiceTy
 }
 
 func (s *SyncService) Sync(ctx context.Context, server *database.ServerModel) (int, error) {
+	slog.Info("sync started", "server", server.Name)
+
 	domains, err := s.domainSync.Sync(ctx, server)
 	if err != nil {
+		slog.Info(
+			"domain sync failed",
+			"server", server.Name,
+			"error", err,
+		)
 		return -1, err
 	}
 
@@ -55,18 +63,34 @@ func (s *SyncService) Sync(ctx context.Context, server *database.ServerModel) (i
 		close(amountCh)
 	}()
 
+	var syncWg sync.WaitGroup
 	syncErrors := []error{}
-	for err := range errCh {
-		syncErrors = append(syncErrors, err)
-	}
-	if len(syncErrors) > 0 {
-		return -1, errors.Join(syncErrors...)
-	}
+
+	syncWg.Add(1)
+	go func() {
+		defer syncWg.Done()
+		for err := range errCh {
+			syncErrors = append(syncErrors, err)
+		}
+	}()
 
 	total := 0
 	for amount := range amountCh {
 		total += amount
 	}
 
+	syncWg.Wait()
+
+
+	if len(syncErrors) > 0 {
+		return -1, errors.Join(syncErrors...)
+	}
+
+	slog.Info(
+		"sync completed",
+		"server", server.Name,
+		"domains", len(domains),
+		"mailboxes", total,
+	)
 	return total, nil
 }
